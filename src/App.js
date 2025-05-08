@@ -4,7 +4,14 @@ import Timer from './components/Timer';
 import PomodoroControls from './components/PomodoroControls';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
+import StatisticsPanel from './components/StatisticsPanel';
+import ThemeSelector from './components/ThemeSelector';
+import NotificationSettings from './components/NotificationSettings';
+import NotificationsContainer from './components/NotificationsContainer';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import apiService from './services/api';
+
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -138,59 +145,71 @@ function App() {
     : 25;
 
   return (
-    <div className="app">
-      <header>
-        <h1>Pomodoro Zamanlayıcı</h1>
-      </header>
+    <ThemeProvider>
+      <NotificationProvider>
+        <div className="app">
+          <div className="app-header-container">
+            <header>
+              <h1>Pomodoro Zamanlayıcı</h1>
+            </header>
+            <div className="app-controls">
+              <NotificationSettings />
+              <ThemeSelector />
+            </div>
+          </div>
 
-      {error && (
-        <div className="error-message">
-          <p>{error}</p>
-          <button onClick={() => setError(null)}>Kapat</button>
-        </div>
-      )}
-
-      <main>
-        <div className="pomodoro-section">
-          <Timer
-            duration={activeDuration}
-            isActive={isActive}
-            onComplete={handleComplete}
-            resetFlag={resetFlag}
-          />
-
-          <PomodoroControls
-            isActive={isActive}
-            onStart={handleStart}
-            onPause={handlePause}
-            onReset={handleReset}
-          />
-
-          {activeTaskId && (
-            <div className="active-task">
-              <h3>Aktif Görev:</h3>
-              <p>{tasks.find(task => task.id === activeTaskId)?.taskName}</p>
+          {error && (
+            <div className="error-message">
+              <p>{error}</p>
+              <button onClick={() => setError(null)}>Kapat</button>
             </div>
           )}
-        </div>
 
-        <div className="tasks-section">
-          <TaskForm onAddTask={handleAddTask} />
+          <main>
+            <div className="pomodoro-section">
+              <Timer
+                duration={activeDuration}
+                isActive={isActive}
+                onComplete={handleComplete}
+                resetFlag={resetFlag}
+              />
 
-          {loading ? (
-            <p>Görevler yükleniyor...</p>
-          ) : (
-            <TaskList
-              tasks={tasks}
-              activeTaskId={activeTaskId}
-              onSelectTask={handleSelectTask}
-              onDeleteTask={handleDeleteTask}
-            />
-          )}
+              <PomodoroControls
+                isActive={isActive}
+                onStart={handleStart}
+                onPause={handlePause}
+                onReset={handleReset}
+              />
+
+              {activeTaskId && (
+                <div className="active-task">
+                  <h3>Aktif Görev:</h3>
+                  <p>{tasks.find(task => task.id === activeTaskId)?.taskName}</p>
+                </div>
+              )}
+              <StatisticsPanel />
+            </div>
+
+            <div className="tasks-section">
+              <TaskForm onAddTask={handleAddTask} />
+
+              {loading ? (
+                <p>Görevler yükleniyor...</p>
+              ) : (
+                <TaskList
+                  tasks={tasks}
+                  activeTaskId={activeTaskId}
+                  onSelectTask={handleSelectTask}
+                  onDeleteTask={handleDeleteTask}
+                />
+              )}
+            </div>
+          </main>
+
+          <NotificationsContainer />
         </div>
-      </main>
-    </div>
+      </NotificationProvider>
+    </ThemeProvider>
   );
 }
-
 export default App;

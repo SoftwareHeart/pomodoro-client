@@ -1,13 +1,21 @@
-// src/components/Timer.js
 import React, { useState, useEffect } from 'react';
+import { useNotification } from '../contexts/NotificationContext';
 
 function Timer({ duration, isActive, onComplete, resetFlag }) {
     const [timeLeft, setTimeLeft] = useState(duration * 60);
+    const { playSound, showVisualNotification, showBrowserNotification } = useNotification();
 
     useEffect(() => {
         // Duration değiştiğinde veya resetFlag değiştiğinde timer'ı resetle
         setTimeLeft(duration * 60);
     }, [duration, resetFlag]);
+
+    useEffect(() => {
+        // Timer başladığında ses çal
+        if (isActive) {
+            playSound('start');
+        }
+    }, [isActive, playSound]);
 
     useEffect(() => {
         // Timer'ı başlat/durdur
@@ -18,6 +26,12 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
                 setTimeLeft(prev => {
                     if (prev <= 1) {
                         clearInterval(interval);
+
+                        // Zamanlayıcı tamamlandığında bildirimleri tetikle
+                        playSound('complete');
+                        showVisualNotification('Pomodoro tamamlandı! Bir mola verin.', 'success', 5000);
+                        showBrowserNotification('Pomodoro Tamamlandı', 'Tebrikler! Şimdi bir mola hak ettiniz.');
+
                         onComplete();
                         return 0;
                     }
@@ -29,7 +43,7 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
         }
 
         return () => clearInterval(interval);
-    }, [isActive, timeLeft, onComplete]);
+    }, [isActive, timeLeft, onComplete, playSound, showVisualNotification, showBrowserNotification]);
 
     // Dakika ve saniye formatını hesapla
     const minutes = Math.floor(timeLeft / 60);

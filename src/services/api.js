@@ -58,7 +58,19 @@ const apiService = {
             console.error(`Error deleting session ${id}:`, error);
             throw error;
         }
+    },
+    // İstatistikleri getir
+    getStatistics: async (userId = "defaultUser") => {
+        try {
+            const response = await axios.get(`${API_URL}/Pomodoro/statistics?userId=${userId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching statistics:', error);
+            throw error;
+        }
     }
+
+
 };
 
 export default apiService;
