@@ -1,7 +1,13 @@
+// src/components/Timer.js
 import React, { useState, useEffect } from 'react';
 
-function Timer({ duration, isActive, onComplete }) {
+function Timer({ duration, isActive, onComplete, resetFlag }) {
     const [timeLeft, setTimeLeft] = useState(duration * 60);
+
+    useEffect(() => {
+        // Duration değiştiğinde veya resetFlag değiştiğinde timer'ı resetle
+        setTimeLeft(duration * 60);
+    }, [duration, resetFlag]);
 
     useEffect(() => {
         // Timer'ı başlat/durdur
@@ -24,11 +30,6 @@ function Timer({ duration, isActive, onComplete }) {
 
         return () => clearInterval(interval);
     }, [isActive, timeLeft, onComplete]);
-
-    useEffect(() => {
-        // Duration değiştiğinde timer'ı resetle
-        setTimeLeft(duration * 60);
-    }, [duration]);
 
     // Dakika ve saniye formatını hesapla
     const minutes = Math.floor(timeLeft / 60);

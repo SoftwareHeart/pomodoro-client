@@ -13,7 +13,7 @@ function App() {
   const [currentSession, setCurrentSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [resetFlag, setResetFlag] = useState(0);
   // Sayfa yüklendiğinde görevleri getir
   useEffect(() => {
     const fetchTasks = async () => {
@@ -64,8 +64,10 @@ function App() {
     // Seçilen görevi bul ve currentSession'a ata
     const selectedTask = tasks.find(task => task.id === taskId);
     setCurrentSession(selectedTask);
-  };
 
+    // Reset timer when task changes
+    setResetFlag(prev => prev + 1);
+  };
   // Görev silme
   const handleDeleteTask = async (taskId) => {
     try {
@@ -105,6 +107,8 @@ function App() {
   // Timer'ı sıfırlama
   const handleReset = () => {
     setIsActive(false);
+    // resetFlag'i değiştirerek Timer bileşeninin yeniden render edilmesini sağlayın
+    setResetFlag(prev => prev + 1);
   };
 
   // Timer tamamlandığında
@@ -152,6 +156,7 @@ function App() {
             duration={activeDuration}
             isActive={isActive}
             onComplete={handleComplete}
+            resetFlag={resetFlag}
           />
 
           <PomodoroControls
