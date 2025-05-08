@@ -45,7 +45,7 @@ export const NotificationProvider = ({ children }) => {
     };
 
     // Görsel bildirim gösterme (DOM'da bir element olarak)
-    const showVisualNotification = (message, type = 'info', duration = 3000) => {
+    const showVisualNotification = (message, type = 'info', duration = 5000) => {
         if (!settings.visualEnabled) return;
 
         // Bildirim eklemek için EventBus kullan

@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Notification from './Notification';
 
 function NotificationsContainer() {
     const [notifications, setNotifications] = useState([]);
+
+    const handleClose = useCallback((id) => {
+        setNotifications(prev => prev.filter(notification => notification.id !== id));
+    }, []);
 
     useEffect(() => {
         // Bildirim olaylarını dinle
@@ -19,10 +23,6 @@ function NotificationsContainer() {
             document.removeEventListener('notification', handleNotification);
         };
     }, []);
-
-    const handleClose = (id) => {
-        setNotifications(prev => prev.filter(notification => notification.id !== id));
-    };
 
     return (
         <div className="notifications-container">

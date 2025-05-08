@@ -556,15 +556,20 @@ button:active {
   gap: 10px;
 }
 
+
 .notification {
+  display: flex;
+  align-items: center;
   background-color: var(--color-panel);
-  border-left: 4px solid var(--color-primary);
-  border-radius: 5px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 12px 15px;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   opacity: 0;
-  transform: translateX(50px);
+  transform: translateX(30px);
+  overflow: hidden;
+  border-left: 0;
+  /* Eski stil kenar çubuğunu kaldırın */
 }
 
 .notification.visible {
@@ -578,21 +583,55 @@ button:active {
 }
 
 .notification.success {
-  border-left-color: var(--color-accent);
+  border-top: 3px solid var(--color-accent);
 }
 
+.notification.success .notification-icon {
+  color: var(--color-accent);
+}
+
+
 .notification.warning {
-  border-left-color: #f39c12;
+  border-top: 3px solid #f39c12;
+}
+
+.notification.warning .notification-icon {
+  color: #f39c12;
 }
 
 .notification.error {
-  border-left-color: #e74c3c;
+  border-top: 3px solid #e74c3c;
+}
+
+.notification.error .notification-icon {
+  color: #e74c3c;
+}
+
+.notification.info {
+  border-top: 3px solid var(--color-secondary);
+}
+
+.notification.info .notification-icon {
+  color: var(--color-secondary);
+}
+
+.notification-icon {
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .notification-content {
+  flex: 1;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+}
+
+.notification-message {
+  color: var(--color-foreground);
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .notification-close {
@@ -606,8 +645,131 @@ button:active {
   margin-left: 10px;
   width: 24px;
   height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
 }
 
 .notification-close:hover {
   opacity: 0.8;
+}
+
+/* İlerleme çubuğu ekleyin (otomatik kapanmayı göstermek için) */
+.notification::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background-color: rgba(0, 0, 0, 0.1);
+  width: 100%;
+  animation: notification-progress linear forwards;
+}
+
+@keyframes notification-progress {
+  from {
+    width: 100%;
+  }
+
+  to {
+    width: 0%;
+  }
+}
+
+.notification.success::after {
+  animation-duration: attr(data-duration ms, 5000ms);
+  background-color: var(--color-accent);
+}
+
+.notification.warning::after {
+  animation-duration: attr(data-duration ms, 5000ms);
+  background-color: #f39c12;
+}
+
+.notification.error::after {
+  animation-duration: attr(data-duration ms, 5000ms);
+  background-color: #e74c3c;
+}
+
+.notification.info::after {
+  animation-duration: attr(data-duration ms, 5000ms);
+  background-color: var(--color-secondary);
+}
+
+/* App.css'e ekleyin */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  background-color: var(--color-panel);
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 450px;
+  overflow: hidden;
+  animation: modal-appear 0.3s ease;
+}
+
+@keyframes modal-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--color-foreground);
+}
+
+.modal-body {
+  padding: 20px;
+  color: var(--color-foreground);
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-cancel-btn {
+  background-color: #95a5a6;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-confirm-btn {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
 }

@@ -11,7 +11,7 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
     }, [duration, resetFlag]);
 
     useEffect(() => {
-        // Timer başladığında ses çal
+        // Timer başladığında ses çal, ama bildirim gösterme
         if (isActive) {
             playSound('start');
         }
