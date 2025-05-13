@@ -1,14 +1,15 @@
 import axios from 'axios';
 
-// API'nızın URL'sini buraya yazın
-// Buradaki port numarasını kendi API'nizin çalıştığı port ile değiştirin 
-const API_URL = 'https://localhost:7023/api';
+// API'nın URL'sini Docker ortamı için ayarlayın
+const API_URL = '/api';
 
 const apiService = {
     // Tüm Pomodoro oturumlarını getir
     getSessions: async () => {
         try {
+            console.log('Fetching sessions from:', `${API_URL}/Pomodoro`);
             const response = await axios.get(`${API_URL}/Pomodoro`);
+            console.log('Sessions response:', response.data);
             return response.data;
         } catch (error) {
             console.error('Error fetching sessions:', error);
@@ -62,15 +63,15 @@ const apiService = {
     // İstatistikleri getir
     getStatistics: async (userId = "defaultUser") => {
         try {
+            console.log('Fetching stats from:', `${API_URL}/Pomodoro/statistics?userId=${userId}`);
             const response = await axios.get(`${API_URL}/Pomodoro/statistics?userId=${userId}`);
+            console.log('Stats response:', response.data);
             return response.data;
         } catch (error) {
             console.error('Error fetching statistics:', error);
             throw error;
         }
     }
-
-
 };
 
 export default apiService;
