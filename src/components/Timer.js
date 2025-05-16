@@ -3,49 +3,57 @@ import { useNotification } from '../contexts/NotificationContext';
 
 function Timer({ duration, isActive, onComplete, resetFlag }) {
     const [timeLeft, setTimeLeft] = useState(duration * 60);
+    const [startTime, setStartTime] = useState(null);
     const { playSound, showVisualNotification, showBrowserNotification } = useNotification();
 
+    // Zamanlayıcıyı başa döndür
     useEffect(() => {
-        // Duration değiştiğinde veya resetFlag değiştiğinde timer'ı resetle
         setTimeLeft(duration * 60);
+        setStartTime(null);
     }, [duration, resetFlag]);
 
+    // Başlangıç sesi
     useEffect(() => {
-        // Timer başladığında ses çal, ama bildirim gösterme
-        if (isActive) {
+        if (isActive && !startTime) {
             playSound('start');
-        }
-    }, [isActive, playSound]);
-
-    useEffect(() => {
-        // Timer'ı başlat/durdur
-        let interval = null;
-
-        if (isActive && timeLeft > 0) {
-            interval = setInterval(() => {
-                setTimeLeft(prev => {
-                    if (prev <= 1) {
-                        clearInterval(interval);
-
-                        // Zamanlayıcı tamamlandığında bildirimleri tetikle
-                        playSound('complete');
-                        showVisualNotification('Pomodoro tamamlandı! Bir mola verin.', 'success', 5000);
-                        showBrowserNotification('Pomodoro Tamamlandı', 'Tebrikler! Şimdi bir mola hak ettiniz.');
-
-                        onComplete();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
+            setStartTime(Date.now());
         } else if (!isActive) {
-            clearInterval(interval);
+            setStartTime(null);
         }
+    }, [isActive, playSound, startTime]);
 
-        return () => clearInterval(interval);
+    // Daha hassas zamanlayıcı implementasyonu
+    useEffect(() => {
+        if (!isActive || timeLeft <= 0) return;
+
+        // Başlangıç zamanı ve kalan süre kaydediliyor
+        const initialTime = Date.now();
+        const initialTimeLeft = timeLeft;
+
+        const timer = setInterval(() => {
+            // Geçen süreyi hesapla ve kalan süreyi güncelle
+            const elapsed = Math.floor((Date.now() - initialTime) / 1000);
+            const newTimeLeft = initialTimeLeft - elapsed;
+
+            if (newTimeLeft <= 0) {
+                clearInterval(timer);
+                setTimeLeft(0);
+
+                // Tamamlama bildirimleri
+                playSound('complete');
+                showVisualNotification('Pomodoro tamamlandı! Bir mola verin.', 'success', 5000);
+                showBrowserNotification('Pomodoro Tamamlandı', 'Tebrikler! Şimdi bir mola hak ettiniz.');
+
+                onComplete();
+            } else {
+                setTimeLeft(newTimeLeft);
+            }
+        }, 250); // Daha sık kontrol ederek hassasiyeti artır
+
+        return () => clearInterval(timer);
     }, [isActive, timeLeft, onComplete, playSound, showVisualNotification, showBrowserNotification]);
 
-    // Dakika ve saniye formatını hesapla
+    // Dakika ve saniye formatı
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
 
