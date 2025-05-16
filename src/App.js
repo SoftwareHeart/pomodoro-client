@@ -208,44 +208,50 @@ function AppContent() {
       )}
 
       <main>
-        <div className="pomodoro-section">
-          <Timer
-            duration={activeDuration}
-            isActive={isActive}
-            onComplete={handleComplete}
-            resetFlag={resetFlag}
-          />
+        <div className="app-container">
+          <div className="app-column">
+            <div className="pomodoro-section">
+              <Timer
+                duration={activeDuration}
+                isActive={isActive}
+                onComplete={handleComplete}
+                resetFlag={resetFlag}
+              />
 
-          <PomodoroControls
-            isActive={isActive}
-            onStart={handleStart}
-            onPause={handlePause}
-            onReset={handleReset}
-          />
+              <PomodoroControls
+                isActive={isActive}
+                onStart={handleStart}
+                onPause={handlePause}
+                onReset={handleReset}
+              />
 
-          {activeTaskId && (
-            <div className="active-task">
-              <h3>Aktif Görev:</h3>
-              <p>{tasks.find(task => task.id === activeTaskId)?.taskName}</p>
+              {activeTaskId && (
+                <div className="active-task">
+                  <h3>Aktif Görev:</h3>
+                  <p>{tasks.find(task => task.id === activeTaskId)?.taskName}</p>
+                </div>
+              )}
             </div>
-          )}
 
-          <StatisticsPanel />
-        </div>
+            <div className="tasks-section">
+              <TaskForm onAddTask={handleAddTask} />
 
-        <div className="tasks-section">
-          <TaskForm onAddTask={handleAddTask} />
+              {loading ? (
+                <p>Görevler yükleniyor...</p>
+              ) : (
+                <TaskList
+                  tasks={tasks}
+                  activeTaskId={activeTaskId}
+                  onSelectTask={handleSelectTask}
+                  onDeleteTask={handleDeleteTask}
+                />
+              )}
+            </div>
+          </div>
 
-          {loading ? (
-            <p>Görevler yükleniyor...</p>
-          ) : (
-            <TaskList
-              tasks={tasks}
-              activeTaskId={activeTaskId}
-              onSelectTask={handleSelectTask}
-              onDeleteTask={handleDeleteTask}
-            />
-          )}
+          <div className="stats-column">
+            <StatisticsPanel />
+          </div>
         </div>
       </main>
 
@@ -262,5 +268,4 @@ function AppContent() {
     </div>
   );
 }
-
 export default App;
