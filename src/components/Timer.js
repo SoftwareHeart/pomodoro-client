@@ -1,59 +1,102 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 
 function Timer({ duration, isActive, onComplete, resetFlag }) {
+    // State değişkenleri
     const [timeLeft, setTimeLeft] = useState(duration * 60);
-    const [startTime, setStartTime] = useState(null);
+    const [workerReady, setWorkerReady] = useState(false);
+    const [hasStarted, setHasStarted] = useState(false);  // Başlama durumunu izlemek için yeni state
+
+    // Referanslar
+    const workerRef = useRef(null);
+    const previousIsActiveRef = useRef(isActive);  // Önceki isActive değerini takip etmek için referans
+
+    // Context
     const { playSound, showVisualNotification, showBrowserNotification } = useNotification();
 
-    // Zamanlayıcıyı başa döndür
-    useEffect(() => {
-        setTimeLeft(duration * 60);
-        setStartTime(null);
-    }, [duration, resetFlag]);
+    // Worker'dan gelen mesajları işleyen callback
+    const handleWorkerMessage = useCallback((event) => {
+        const { type, timeLeft } = event.data;
 
-    // Başlangıç sesi
-    useEffect(() => {
-        if (isActive && !startTime) {
-            playSound('start');
-            setStartTime(Date.now());
-        } else if (!isActive) {
-            setStartTime(null);
-        }
-    }, [isActive, playSound, startTime]);
+        switch (type) {
+            case 'tick':
+                setTimeLeft(timeLeft);
+                break;
 
-    // Daha hassas zamanlayıcı implementasyonu
-    useEffect(() => {
-        if (!isActive || timeLeft <= 0) return;
-
-        // Başlangıç zamanı ve kalan süre kaydediliyor
-        const initialTime = Date.now();
-        const initialTimeLeft = timeLeft;
-
-        const timer = setInterval(() => {
-            // Geçen süreyi hesapla ve kalan süreyi güncelle
-            const elapsed = Math.floor((Date.now() - initialTime) / 1000);
-            const newTimeLeft = initialTimeLeft - elapsed;
-
-            if (newTimeLeft <= 0) {
-                clearInterval(timer);
-                setTimeLeft(0);
-
-                // Tamamlama bildirimleri
+            case 'complete':
+                setHasStarted(false);  // Timer tamamlandığında başlama durumunu sıfırla
                 playSound('complete');
                 showVisualNotification('Pomodoro tamamlandı! Bir mola verin.', 'success', 5000);
                 showBrowserNotification('Pomodoro Tamamlandı', 'Tebrikler! Şimdi bir mola hak ettiniz.');
-
                 onComplete();
-            } else {
-                setTimeLeft(newTimeLeft);
+                break;
+
+            default:
+                console.log('Bilinmeyen mesaj tipi:', type);
+        }
+    }, [onComplete, playSound, showVisualNotification, showBrowserNotification]);
+
+    // Worker'ı oluştur
+    useEffect(() => {
+        // Worker'ı başlat
+        const workerUrl = `${process.env.PUBLIC_URL}/TimerWorker.js`;
+        workerRef.current = new Worker(workerUrl);
+
+        // Mesaj yöneticisini ayarla
+        workerRef.current.onmessage = handleWorkerMessage;
+
+        // Worker hazır
+        setWorkerReady(true);
+
+        // Temizlik fonksiyonu
+        return () => {
+            if (workerRef.current) {
+                workerRef.current.terminate();
+                workerRef.current = null;
             }
-        }, 250); // Daha sık kontrol ederek hassasiyeti artır
+        };
+    }, [handleWorkerMessage]);
 
-        return () => clearInterval(timer);
-    }, [isActive, timeLeft, onComplete, playSound, showVisualNotification, showBrowserNotification]);
+    // Zamanlayıcı sıfırlandığında veya süre değiştiğinde
+    useEffect(() => {
+        if (workerRef.current && workerReady) {
+            workerRef.current.postMessage({
+                command: 'reset',
+                duration: duration * 60
+            });
+            setHasStarted(false);  // Sıfırlama yapıldığında başlama durumunu sıfırla
+        }
+    }, [duration, resetFlag, workerReady]);
 
-    // Dakika ve saniye formatı
+    // İsActive değişimlerini yönet
+    useEffect(() => {
+        if (!workerRef.current || !workerReady) return;
+
+        const wasActive = previousIsActiveRef.current;
+        previousIsActiveRef.current = isActive;
+
+        if (isActive) {
+            // Sadece ilk kez başlatıldığında veya timer sıfırlandıktan sonra tekrar başlatıldığında ses çal
+            if (!hasStarted) {
+                playSound('start');
+                setHasStarted(true);
+            }
+
+            workerRef.current.postMessage({
+                command: 'start',
+                duration: timeLeft
+            });
+        } else {
+            // Daha önce aktifse şimdi duraklat
+            if (wasActive) {
+                workerRef.current.postMessage({
+                    command: 'pause'
+                });
+            }
+        }
+    }, [isActive, timeLeft, playSound, workerReady, hasStarted]);
+
+    // Görsel formatı oluştur
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
 
