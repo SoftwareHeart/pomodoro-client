@@ -71,6 +71,17 @@ const apiService = {
             console.error('Error fetching statistics:', error);
             throw error;
         }
+    },
+
+    // src/services/api.js içine ekleyin
+    getWeeklyStats: async (userId = "defaultUser") => {
+        try {
+            const response = await axios.get(`${API_URL}/Pomodoro/weekly-stats?userId=${userId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching weekly stats:', error);
+            throw error;
+        }
     }
 };
 

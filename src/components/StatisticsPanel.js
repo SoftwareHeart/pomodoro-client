@@ -4,62 +4,85 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 function StatisticsPanel() {
     const [stats, setStats] = useState(null);
+    const [weeklyStats, setWeeklyStats] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [timeRange, setTimeRange] = useState('week'); // week, month, all
 
-    // İstatistikleri getir
+    // Tüm istatistikleri ve haftalık verileri getir
     useEffect(() => {
-        const fetchStatistics = async () => {
+        const fetchAllStats = async () => {
             try {
                 setLoading(true);
-                const data = await apiService.getStatistics();
-                setStats(data);
+
+                // Paralel olarak tüm istekleri yap
+                const [generalStats, weeklyData] = await Promise.all([
+                    apiService.getStatistics(),
+                    apiService.getWeeklyStats()
+                ]);
+
+                setStats(generalStats);
+                setWeeklyStats(weeklyData);
                 setError(null);
             } catch (error) {
                 console.error("İstatistikler yüklenirken hata oluştu:", error);
                 setError("İstatistikler yüklenirken bir hata oluştu.");
+
+                // API çalışmıyorsa örnek verilerle devam et
+                setWeeklyStats([
+                    { name: 'Pzt', tamamlanan: 4, dakika: 100 },
+                    { name: 'Sal', tamamlanan: 3, dakika: 75 },
+                    { name: 'Çar', tamamlanan: 5, dakika: 125 },
+                    { name: 'Per', tamamlanan: 2, dakika: 50 },
+                    { name: 'Cum', tamamlanan: 6, dakika: 150 },
+                    { name: 'Cmt', tamamlanan: 3, dakika: 75 },
+                    { name: 'Paz', tamamlanan: 4, dakika: 100 },
+                ]);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchStatistics();
+        fetchAllStats();
 
         // Her 5 dakikada bir güncelle
-        const interval = setInterval(fetchStatistics, 5 * 60 * 1000);
+        const interval = setInterval(fetchAllStats, 5 * 60 * 1000);
 
         return () => clearInterval(interval);
     }, []);
 
-    // Pasta grafik için sahte veriler (gerçek API'den gelecek şekilde değiştirilebilir)
+    // Pasta grafik için gerçek veriler
     const pieData = useMemo(() => {
         if (!stats) return [];
         return [
             { name: 'Bugün', value: stats.completedToday },
-            { name: 'Diğer Günler', value: stats.totalCompletedSessions - stats.completedToday }
+            { name: 'Diğer Günler', value: Math.max(0, stats.totalCompletedSessions - stats.completedToday) }
         ];
     }, [stats]);
 
-    // Çizgi grafik için sahte veriler (gerçek API'den gelecek şekilde değiştirilebilir)
-    const lineData = useMemo(() => {
-        // Pratik için örnek veri
-        return [
-            { name: 'Pzt', tamamlanan: 4, dakika: 100 },
-            { name: 'Sal', tamamlanan: 3, dakika: 75 },
-            { name: 'Çar', tamamlanan: 5, dakika: 125 },
-            { name: 'Per', tamamlanan: 2, dakika: 50 },
-            { name: 'Cum', tamamlanan: 6, dakika: 150 },
-            { name: 'Cmt', tamamlanan: 3, dakika: 75 },
-            { name: 'Paz', tamamlanan: 4, dakika: 100 },
-        ];
-    }, []);
+    // Grafikler için filtrelenmiş veriler
+    const chartData = useMemo(() => {
+        if (!weeklyStats || weeklyStats.length === 0) {
+            return [];
+        }
+
+        // Zaman aralığına göre verileri filtrele
+        if (timeRange === 'week') {
+            return weeklyStats; // Tüm haftalık verileri kullan
+        } else if (timeRange === 'month') {
+            // Örnek: Son 30 günü göster (burada şimdilik tüm verileri kullanıyoruz)
+            return weeklyStats;
+        } else {
+            // Tüm zamanlar için (burada şimdilik tüm verileri kullanıyoruz)
+            return weeklyStats;
+        }
+    }, [weeklyStats, timeRange]);
 
     // Grafik renkleri
     const COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
 
     if (loading) return <div className="statistics-loading">İstatistikler yükleniyor...</div>;
-    if (error) return <div className="statistics-error">{error}</div>;
+    if (error && !stats) return <div className="statistics-error">{error}</div>;
     if (!stats) return null;
 
     return (
@@ -113,7 +136,7 @@ function StatisticsPanel() {
                 <div className="chart-container">
                     <h3>Haftalık Aktivite</h3>
                     <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={lineData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
                             <YAxis />
