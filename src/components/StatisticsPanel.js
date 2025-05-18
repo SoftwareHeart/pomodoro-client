@@ -8,7 +8,8 @@ function StatisticsPanel() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [timeRange, setTimeRange] = useState('week');
-    const [activeTab, setActiveTab] = useState('overview'); // overview, charts, trends
+    const [activeTab, setActiveTab] = useState('overview');
+    const [previousDayStats, setPreviousDayStats] = useState(null);
 
     useEffect(() => {
         const fetchAllStats = async () => {
@@ -21,13 +22,28 @@ function StatisticsPanel() {
 
                 setStats(generalStats);
                 setWeeklyStats(weeklyData);
+
+                // Önceki gün verilerini bulalım
+                if (weeklyData && weeklyData.length > 1) {
+                    // weeklyData son 7 günü içerdiğinden, bugün verisi son eleman, dün verisi sondan bir önceki olmalı
+                    const today = weeklyData[weeklyData.length - 1];
+                    const yesterday = weeklyData[weeklyData.length - 2];
+
+                    if (today && yesterday) {
+                        setPreviousDayStats({
+                            completedPomodoros: yesterday.tamamlanan,
+                            totalMinutes: yesterday.dakika
+                        });
+                    }
+                }
+
                 setError(null);
             } catch (error) {
                 console.error("İstatistikler yüklenirken hata oluştu:", error);
                 setError("İstatistikler yüklenirken bir hata oluştu.");
 
                 // Örnek veriler
-                setWeeklyStats([
+                const sampleData = [
                     { name: 'Pzt', tamamlanan: 4, dakika: 100 },
                     { name: 'Sal', tamamlanan: 3, dakika: 75 },
                     { name: 'Çar', tamamlanan: 5, dakika: 125 },
@@ -35,7 +51,20 @@ function StatisticsPanel() {
                     { name: 'Cum', tamamlanan: 6, dakika: 150 },
                     { name: 'Cmt', tamamlanan: 3, dakika: 75 },
                     { name: 'Paz', tamamlanan: 4, dakika: 100 },
-                ]);
+                ];
+
+                setWeeklyStats(sampleData);
+
+                // Örnek önceki gün verisi de belirleyelim
+                const today = sampleData[sampleData.length - 1];
+                const yesterday = sampleData[sampleData.length - 2];
+
+                if (today && yesterday) {
+                    setPreviousDayStats({
+                        completedPomodoros: yesterday.tamamlanan,
+                        totalMinutes: yesterday.dakika
+                    });
+                }
             } finally {
                 setLoading(false);
             }
@@ -45,6 +74,23 @@ function StatisticsPanel() {
         const interval = setInterval(fetchAllStats, 5 * 60 * 1000);
         return () => clearInterval(interval);
     }, []);
+
+    // Trend hesaplama fonksiyonu - ŞİMDİ DAKİKA BAZINDA KARŞILAŞTIRMA YAPIYORUZ
+    const calculateTrend = useMemo(() => {
+        if (!stats || !previousDayStats || previousDayStats.totalMinutes === 0) {
+            return { percentage: 0, isPositive: true };
+        }
+
+        // Bugünün toplam dakikası ile dünün karşılaştırması
+        // MinutesToday değerini API'den alıyoruz
+        const difference = stats.minutesToday - previousDayStats.totalMinutes;
+        const percentage = Math.round((difference / previousDayStats.totalMinutes) * 100);
+
+        return {
+            percentage: Math.abs(percentage), // Mutlak değer alıyoruz, işareti ayrı tutuyoruz
+            isPositive: percentage >= 0
+        };
+    }, [stats, previousDayStats]);
 
     const pieData = useMemo(() => {
         if (!stats) return [];
@@ -173,13 +219,23 @@ function StatisticsPanel() {
                                     <div className="stat-label">Toplam Çalışma</div>
                                 </div>
                             </div>
-                            <div className="stat-trend positive">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                                    <polyline points="17 6 23 6 23 12"></polyline>
-                                </svg>
-                                <span>%12</span>
-                            </div>
+                            {previousDayStats && (
+                                <div className={`stat-trend ${calculateTrend.isPositive ? 'positive' : 'negative'}`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        {calculateTrend.isPositive ? (
+                                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                        ) : (
+                                            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                                        )}
+                                        {calculateTrend.isPositive ? (
+                                            <polyline points="17 6 23 6 23 12"></polyline>
+                                        ) : (
+                                            <polyline points="17 18 23 18 23 12"></polyline>
+                                        )}
+                                    </svg>
+                                    <span>%{calculateTrend.percentage}</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="stat-card">
