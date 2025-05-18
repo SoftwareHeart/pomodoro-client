@@ -226,11 +226,10 @@ function AppContent() {
                   <p>{tasks.find(task => task.id === activeTaskId)?.taskName}</p>
                 </div>
               )}
-              <TaskForm onAddTask={handleAddTask} />
             </div>
 
             <div className="tasks-section">
-
+              <TaskForm onAddTask={handleAddTask} />
               <div className="tasks-list-wrapper">
                 {loading ? (
                   <p>Görevler yükleniyor...</p>
