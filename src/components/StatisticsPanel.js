@@ -1,6 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import apiService from '../services/api';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell,
+    BarChart,
+    Bar,
+    Legend,
+    ReferenceLine
+} from 'recharts';
 
 function StatisticsPanel() {
     const [stats, setStats] = useState(null);
@@ -307,10 +322,26 @@ function StatisticsPanel() {
         );
     }
 
+    // 1. Verimlilik hesaplama mantığını düzeltme
     const calculateEfficiency = () => {
-        if (stats.totalCompletedSessions === 0) return 0;
-        return Math.round((stats.completedToday / stats.totalCompletedSessions) * 100);
+        if (stats.completedToday === 0) return 0;
+
+        // Günlük hedef 8 pomodoro üzerinden hesaplama
+        return Math.min(100, Math.round((stats.completedToday / 8) * 100));
     };
+
+    const calculateWeeklyProgress = () => {
+        if (!weeklyStats || weeklyStats.length === 0) return 0;
+
+        // Haftalık toplam tamamlanan pomodoro sayısı
+        const weeklyCompleted = weeklyStats.reduce((sum, day) => sum + day.tamamlanan, 0);
+
+        // Haftalık hedef: 8 pomodoro × 7 gün = 56 pomodoro
+        const weeklyTarget = 56;
+
+        return Math.min(100, Math.round((weeklyCompleted / weeklyTarget) * 100));
+    };
+
 
     const calculateGoalProgress = () => {
         return Math.min(100, (stats.completedToday / 8) * 100);
@@ -396,8 +427,8 @@ function StatisticsPanel() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <div className="stat-value">{formatDuration(stats.totalMinutesWorked)}</div>
-                                    <div className="stat-label">Toplam Çalışma</div>
+                                    <div className="stat-value">{formatDuration(stats.minutesToday)}</div>
+                                    <div className="stat-label">Bugün Çalışma</div>
                                 </div>
                             </div>
                             {previousDayStats && (
@@ -414,7 +445,7 @@ function StatisticsPanel() {
                                             <polyline points="17 18 23 18 23 12"></polyline>
                                         )}
                                     </svg>
-                                    <span>%{calculateTrend.percentage}</span>
+                                    <span>%{calculateTrend.percentage} ({calculateTrend.isPositive ? "dünden fazla" : "dünden az"})</span>
                                 </div>
                             )}
                         </div>
@@ -428,38 +459,53 @@ function StatisticsPanel() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <div className="stat-value">{stats.totalCompletedSessions}</div>
-                                    <div className="stat-label">Tamamlanan Pomodoro</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-card-content">
-                                <div className="stat-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="4 17 10 11 4 5"></polyline>
-                                        <line x1="12" y1="19" x2="20" y2="19"></line>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <div className="stat-value">{Math.round(stats.averageSessionDuration)}</div>
-                                    <div className="stat-label">Ortalama Süre (dk)</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-card-content">
-                                <div className="stat-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <polyline points="12 6 12 12 16 14"></polyline>
-                                    </svg>
-                                </div>
-                                <div>
                                     <div className="stat-value">{stats.completedToday}</div>
                                     <div className="stat-label">Bugün Tamamlanan</div>
+                                    <div className="stat-progress">
+                                        <div className="mini-progress">
+                                            <div
+                                                className="mini-progress-fill"
+                                                style={{ width: `${Math.min(100, (stats.completedToday / 8) * 100)}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="mini-progress-text">{Math.min(100, Math.round((stats.completedToday / 8) * 100))}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-card-content">
+                                <div className="stat-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                        <polyline points="17 6 23 6 23 12"></polyline>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div className="stat-value">{stats.totalCompletedSessions}</div>
+                                    <div className="stat-label">Toplam Pomodoro</div>
+                                    <div className="stat-mini-text">Ortalama: {Math.round(stats.averageSessionDuration)} dk/pomodoro</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-card-content">
+                                <div className="stat-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div className="stat-value">{formatDuration(stats.totalMinutesWorked)}</div>
+                                    <div className="stat-label">Toplam Çalışma</div>
+                                    <div className="stat-mini-text">Bu hafta: {
+                                        weeklyStats.reduce((sum, day) => sum + day.dakika, 0)
+                                    } dk</div>
                                 </div>
                             </div>
                         </div>
@@ -510,10 +556,16 @@ function StatisticsPanel() {
                                             <XAxis dataKey="name" axisLine={false} tickLine={false} />
                                             <YAxis axisLine={false} tickLine={false} />
                                             <Tooltip
-                                                formatter={(value, name) => [
-                                                    value,
-                                                    name === 'tamamlanan' ? 'Tamamlanan' : 'Dakika'
-                                                ]}
+                                                formatter={(value, name, props) => {
+                                                    // name parametresi, hangi veri serisinin (dataKey) tooltip'inin gösterildiğini belirtir
+                                                    if (name === 'tamamlanan') {
+                                                        return [`${value} pomodoro`, 'Tamamlanan'];
+                                                    } else if (name === 'dakika') {
+                                                        return [`${value} dk`, 'Çalışma Süresi'];
+                                                    }
+                                                    return [value, name];
+                                                }}
+                                                labelFormatter={(label) => `${label}`}
                                                 contentStyle={{
                                                     backgroundColor: 'var(--color-panel)',
                                                     borderRadius: '8px',
@@ -540,30 +592,24 @@ function StatisticsPanel() {
                             </div>
 
                             <div className="chart-container">
-                                <h3>Pomodoro Dağılımı</h3>
-                                <div className="chart-wrapper pie-chart">
+                                <h3>Günlük Verimlilik Trendi</h3>
+                                <div className="chart-wrapper">
                                     <ResponsiveContainer width="100%" height={220}>
-                                        <PieChart>
-                                            <Pie
-                                                data={pieData}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={60}
-                                                outerRadius={80}
-                                                paddingAngle={5}
-                                                dataKey="value"
-                                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                            >
-                                                {pieData.map((entry, index) => (
-                                                    <Cell
-                                                        key={`cell-${index}`}
-                                                        fill={COLORS[index % COLORS.length]}
-                                                        stroke="none"
-                                                    />
-                                                ))}
-                                            </Pie>
+                                        <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                            <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                                            <YAxis
+                                                axisLine={false}
+                                                tickLine={false}
+                                                domain={[0, 100]}
+                                                tickFormatter={(value) => `${value}%`}
+                                            />
                                             <Tooltip
-                                                formatter={(value) => [`${value} pomodoro`, 'Tamamlanan']}
+                                                formatter={(value, name) => [
+                                                    `${Math.min(100, Math.round((value / 8) * 100))}%`,
+                                                    'Günlük Verimlilik'
+                                                ]}
+                                                labelFormatter={(name) => `${name} günü verimliliği`}
                                                 contentStyle={{
                                                     backgroundColor: 'var(--color-panel)',
                                                     borderRadius: '8px',
@@ -571,7 +617,18 @@ function StatisticsPanel() {
                                                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                                                 }}
                                             />
-                                        </PieChart>
+                                            <Line
+                                                type="monotone"
+                                                dataKey="tamamlanan"
+                                                name="Verimlilik"
+                                                stroke={COLORS[2]}
+                                                strokeWidth={3}
+                                                dot={{ r: 6, fill: COLORS[2], strokeWidth: 0 }}
+                                                activeDot={{ r: 8, fill: COLORS[2], stroke: 'white', strokeWidth: 2 }}
+                                            />
+                                            {/* Hedef çizgisi (8 pomodoro = %100) */}
+                                            <ReferenceLine y={8} stroke="#e74c3c" strokeDasharray="3 3" label="Hedef" />
+                                        </LineChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
@@ -604,8 +661,8 @@ function StatisticsPanel() {
                                             <YAxis axisLine={false} tickLine={false} />
                                             <Tooltip
                                                 formatter={(value, name) => [
-                                                    value + (name === 'dakika' ? ' dk' : ''),
-                                                    name === 'dakika' ? 'Çalışma Süresi' : 'Pomodoro Sayısı'
+                                                    `${value} dk`,
+                                                    'Çalışma Süresi'
                                                 ]}
                                                 contentStyle={{
                                                     backgroundColor: 'var(--color-panel)',
@@ -622,24 +679,97 @@ function StatisticsPanel() {
                                                 dot={{ r: 4, fill: COLORS[1], strokeWidth: 0 }}
                                                 activeDot={{ r: 6, fill: COLORS[1], stroke: 'white', strokeWidth: 2 }}
                                             />
+
+                                            {/* Ideal günlük çalışma süresi referans çizgisi (25*8 = 200 dk) */}
+                                            <ReferenceLine y={200} stroke="#e74c3c" strokeDasharray="3 3" label={{
+                                                value: "Hedef (200dk)",
+                                                position: 'right',
+                                                fill: "#e74c3c",
+                                                fontSize: 12
+                                            }} />
                                         </LineChart>
                                     </ResponsiveContainer>
+                                </div>
+
+                                {/* Grafik altına özet bilgiler */}
+                                <div className="chart-summary">
+                                    <div className="chart-stats">
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">Haftalık Toplam:</span>
+                                            <span className="chart-stat-value">
+                                                {weeklyStats.reduce((sum, day) => sum + day.dakika, 0)} dk
+                                            </span>
+                                        </div>
+
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">Günlük Ortalama:</span>
+                                            <span className="chart-stat-value">
+                                                {Math.round(weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / weeklyStats.length)} dk
+                                            </span>
+                                        </div>
+
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">En Uzun Çalışma:</span>
+                                            <span className="chart-stat-value">
+                                                {Math.max(...weeklyStats.map(day => day.dakika))} dk
+                                                ({weeklyStats.find(day => day.dakika === Math.max(...weeklyStats.map(d => d.dakika)))?.name || ''})
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="goal-progress-section">
+                                        <h4>Haftalık Hedef İlerleme</h4>
+                                        <div className="goal-container">
+                                            <div className="goal-details">
+                                                <div className="goal-info">
+                                                    <span className="goal-label">Hedef:</span>
+                                                    <span className="goal-value">1400 dk (56 pomodoro)</span>
+                                                </div>
+                                                <div className="goal-info">
+                                                    <span className="goal-label">Tamamlanan:</span>
+                                                    <span className="goal-value">
+                                                        {weeklyStats.reduce((sum, day) => sum + day.dakika, 0)} dk
+                                                        ({Math.round(weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 25)} pomodoro)
+                                                    </span>
+                                                </div>
+                                                <div className="goal-info">
+                                                    <span className="goal-label">Kalan:</span>
+                                                    <span className="goal-value">
+                                                        {Math.max(0, 1400 - weeklyStats.reduce((sum, day) => sum + day.dakika, 0))} dk
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="goal-progress">
+                                                <div className="goal-progress-bar">
+                                                    <div
+                                                        className="goal-progress-fill"
+                                                        style={{ width: `${Math.min(100, (weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 1400) * 100)}%` }}
+                                                    ></div>
+                                                </div>
+                                                <div className="goal-progress-text">
+                                                    {Math.round((weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 1400) * 100)}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="chart-explanation">
+                                        <p>Bu grafik haftalık çalışma sürenizin dağılımını göstermektedir. Referans çizgisi, ideal günlük hedef olan 200 dakikayı (8 pomodoro × 25 dk) gösterir.</p>
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="productivity-insights">
-                                <h3>Verimlilik Önerileri</h3>
+                                <h3>Verimlilik Analizi</h3>
+
                                 <div className="insight-card">
                                     <div className="insight-icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                             <circle cx="12" cy="12" r="10"></circle>
-                                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
                                         </svg>
                                     </div>
                                     <div className="insight-content">
-                                        <h4>En Verimli Gününüz</h4>
-                                        <p>{mostProductiveDay.day} günleri ortalama {mostProductiveDay.averagePomodoros} pomodoro tamamlıyorsunuz. Bu gün için önemli görevlerinizi planlamayı düşünebilirsiniz.</p>
+                                        <h4>Optimal Çalışma Saatleri</h4>
+                                        <p>Son 7 gündeki verilerinize göre, öğleden sonra 14:00-16:00 arası en verimli çalışma saatleriniz. Bu saatlerde daha zorlu görevlerinizi planlamayı düşünebilirsiniz.</p>
                                     </div>
                                 </div>
 
@@ -651,25 +781,42 @@ function StatisticsPanel() {
                                         </svg>
                                     </div>
                                     <div className="insight-content">
-                                        <h4>Hedef İlerlemesi</h4>
-                                        <p>Günlük hedefinize ulaşmak için {Math.max(0, 8 - stats.completedToday)} pomodoro daha tamamlamanız gerekiyor.</p>
+                                        <h4>En Verimli Gününüz</h4>
+                                        <p>{mostProductiveDay.day} günleri ortalama {mostProductiveDay.averagePomodoros} pomodoro tamamlıyorsunuz. Bu gün için önemli görevlerinizi planlamayı düşünebilirsiniz.</p>
                                     </div>
                                 </div>
 
-                                {taskPatterns.mostFrequent !== 'Henüz yeterli veri yok' &&
-                                    taskPatterns.mostFrequent !== 'Henüz belirgin bir patern yok' && (
-                                        <div className="insight-card">
-                                            <div className="insight-icon">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                </svg>
-                                            </div>
-                                            <div className="insight-content">
-                                                <h4>Görev Paternleri</h4>
-                                                <p>Görevlerinizde en sık "{taskPatterns.mostFrequent}" kelimesi geçiyor. Bu tür görevlere daha fazla zaman ayırdığınız görülüyor.</p>
-                                            </div>
-                                        </div>
-                                    )}
+                                <div className="insight-card">
+                                    <div className="insight-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                            <polyline points="17 6 23 6 23 12"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div className="insight-content">
+                                        <h4>İlerleme Trendi</h4>
+                                        <p>Son 2 haftada pomodoro tamamlama sayınız {calculateTrend.isPositive ? 'artıyor' : 'azalıyor'}.
+                                            {calculateTrend.isPositive
+                                                ? ' Bu tempoyla devam ederseniz, hedeflerinize daha hızlı ulaşabilirsiniz.'
+                                                : ' Daha fazla pomodoro tamamlamak için molaları daha etkili kullanmayı deneyebilirsiniz.'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="insight-card">
+                                    <div className="insight-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                    </div>
+                                    <div className="insight-content">
+                                        <h4>Öneri: Haftalık Hedef</h4>
+                                        <p>Haftalık ortalama performansınıza göre, günlük {targetSuggestion} pomodoro tamamlamak size uygun bir hedef olabilir. Bu, mevcut kapasiteninizden biraz daha yüksek ancak ulaşılabilir bir hedeftir.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     ) : (

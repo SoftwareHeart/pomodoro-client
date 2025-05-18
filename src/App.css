@@ -1420,6 +1420,169 @@ button:active {
   font-weight: 600;
 }
 
+
+.mini-progress {
+  height: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  margin-top: 6px;
+  width: 100%;
+  margin-right: 5px;
+  flex: 1;
+}
+
+.mini-progress-fill {
+  height: 100%;
+  background-color: var(--color-accent);
+  border-radius: 2px;
+}
+
+.stat-progress {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+  font-size: 12px;
+}
+
+.mini-progress-text {
+  font-size: 10px;
+  opacity: 0.7;
+  width: 30px;
+  text-align: right;
+}
+
+.stat-mini-text {
+  font-size: 11px;
+  color: var(--color-foreground);
+  opacity: 0.6;
+  margin-top: 5px;
+}
+
+.productivity-insights {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .productivity-insights {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.insight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--color-panel);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+}
+
+.insight-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: rgba(var(--color-primary-rgb), 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.insight-content h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: var(--color-foreground);
+}
+
+.insight-content p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-foreground);
+  opacity: 0.8;
+}
+
+.empty-stats-message {
+  padding: 40px;
+  text-align: center;
+}
+
+.empty-stats-message svg {
+  width: 60px;
+  height: 60px;
+  opacity: 0.2;
+  margin-bottom: 20px;
+}
+
+.empty-stats-message h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.empty-stats-message p {
+  max-width: 500px;
+  margin: 0 auto;
+  opacity: 0.7;
+  line-height: 1.6;
+}
+
+
+/* Grafik altındaki özet bilgiler için stiller */
+.chart-summary {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: rgba(var(--color-panel-rgb), 0.6);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.chart-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.chart-stat-item {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-stat-label {
+  font-size: 12px;
+  color: var(--color-foreground);
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.chart-stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.chart-explanation {
+  font-size: 13px;
+  color: var(--color-foreground);
+  opacity: 0.8;
+  line-height: 1.5;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
 .insight-card {
   display: flex;
   align-items: flex-start;
@@ -2338,4 +2501,128 @@ button:active {
 
 :root[data-theme="dark"] .insight-content p {
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* Hedef İlerleme Bileşeni Stilleri */
+.goal-progress-section {
+  margin-top: 20px;
+  padding: 16px;
+  background-color: rgba(var(--color-panel-rgb), 0.5);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.goal-progress-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--color-foreground);
+  opacity: 0.9;
+}
+
+.goal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.goal-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 30px;
+}
+
+.goal-info {
+  flex: 1;
+  min-width: 160px;
+}
+
+.goal-label {
+  font-size: 12px;
+  color: var(--color-foreground);
+  opacity: 0.7;
+  margin-right: 5px;
+}
+
+.goal-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-foreground);
+}
+
+.goal-progress {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.goal-progress-bar {
+  flex: 1;
+  height: 10px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.goal-progress-fill {
+  height: 100%;
+  background-color: var(--color-accent);
+  border-radius: 5px;
+}
+
+.goal-progress-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-accent);
+  width: 40px;
+  text-align: right;
+}
+
+/* Koyu tema için düzeltmeler */
+[data-theme="dark"] .chart-summary,
+[data-theme="dark"] .goal-progress-section,
+[data-theme="dark"] .insight-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .goal-progress-bar {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .goal-label,
+[data-theme="dark"] .chart-stat-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] .goal-value,
+[data-theme="dark"] .chart-stat-value {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] .goal-progress-text {
+  color: var(--color-accent);
+}
+
+[data-theme="dark"] .chart-explanation {
+  color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Verimlilik Analizi kartlarını koyu temada düzenleme */
+[data-theme="dark"] .productivity-insights .insight-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .insight-content h4 {
+  color: rgba(26, 2, 2, 0.9);
+}
+
+[data-theme="dark"] .insight-content p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Grafikler için arka plan düzeltmesi */
+[data-theme="dark"] .chart-container {
+  background-color: rgba(255, 255, 255, 0.02);
 }

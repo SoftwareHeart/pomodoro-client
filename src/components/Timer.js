@@ -1,4 +1,3 @@
-// src/components/Timer.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 
@@ -7,6 +6,7 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
     const [timeLeft, setTimeLeft] = useState(duration * 60);
     const [workerReady, setWorkerReady] = useState(false);
     const [hasStarted, setHasStarted] = useState(false);  // Başlama durumunu izlemek için state
+    const [isCompleting, setIsCompleting] = useState(false); // Timer'ın tamamlanma durumunu izlemek için yeni state
 
     // Referanslar
     const workerRef = useRef(null);
@@ -26,10 +26,15 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
 
             case 'complete':
                 setHasStarted(false);  // Timer tamamlandığında başlama durumunu sıfırla
+                setIsCompleting(true); // Tamamlanma durumunu true yap
                 playSound('complete');
                 showVisualNotification('Pomodoro tamamlandı! Bir mola verin.', 'success', 5000);
                 showBrowserNotification('Pomodoro Tamamlandı', 'Tebrikler! Şimdi bir mola hak ettiniz.');
                 onComplete();
+                // 1 saniye sonra tamamlanma durumunu temizle
+                setTimeout(() => {
+                    setIsCompleting(false);
+                }, 1000);
                 break;
 
             default:
@@ -66,6 +71,7 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
                 duration: duration * 60
             });
             setHasStarted(false);  // Sıfırlama yapıldığında başlama durumunu sıfırla
+            setIsCompleting(false); // Tamamlanma durumunu da sıfırla
         }
     }, [duration, resetFlag, workerReady]);
 
@@ -76,7 +82,7 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
         const wasActive = previousIsActiveRef.current;
         previousIsActiveRef.current = isActive;
 
-        if (isActive) {
+        if (isActive && !isCompleting) { // isCompleting true ise ses çalma
             // Sadece ilk kez başlatıldığında veya timer sıfırlandıktan sonra tekrar başlatıldığında ses çal
             if (!hasStarted) {
                 playSound('start');
@@ -95,7 +101,7 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
                 });
             }
         }
-    }, [isActive, timeLeft, playSound, workerReady, hasStarted]);
+    }, [isActive, timeLeft, playSound, workerReady, hasStarted, isCompleting]);
 
     // Görsel formatı oluştur
     const minutes = Math.floor(timeLeft / 60);
