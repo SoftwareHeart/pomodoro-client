@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 // API'nın URL'sini Docker ortamı için ayarlayın
-const API_URL = '/api';
+// const API_URL = '/api';
+
+const API_URL = 'http://localhost:7023/api';
 
 const apiService = {
     // Tüm Pomodoro oturumlarını getir

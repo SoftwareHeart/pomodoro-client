@@ -23,10 +23,21 @@ export const NotificationProvider = ({ children }) => {
     const playSound = (soundName) => {
         if (!settings.soundEnabled) return;
 
+        // Her bir sesle ilgili özel durum kontrolü
+        if (soundName === 'start' || soundName === 'complete') {
+            // Ses dosyalarının adlarını konsola yazdır (Debug amaçlı)
+            console.log(`Playing sound: ${soundName}.mp3`);
+        }
+
         const sound = new Audio(`/sounds/${soundName}.mp3`);
         sound.volume = settings.soundVolume;
-        sound.play().catch(error => console.error('Sound play error:', error));
-    };
+
+        // Ses çalınmadan önce eski ses oynatmalarını durdurmak için
+        // Aynı anda birden fazla ses çalınmasını engelle
+        sound.oncanplaythrough = () => {
+            sound.play().catch(error => console.error(`Sound play error (${soundName}):`, error));
+        };
+    }
 
     // Tarayıcı bildirimi gösterme
     const showBrowserNotification = (title, body) => {

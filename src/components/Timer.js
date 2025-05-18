@@ -1,3 +1,4 @@
+// src/components/Timer.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 
@@ -5,7 +6,7 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
     // State değişkenleri
     const [timeLeft, setTimeLeft] = useState(duration * 60);
     const [workerReady, setWorkerReady] = useState(false);
-    const [hasStarted, setHasStarted] = useState(false);  // Başlama durumunu izlemek için yeni state
+    const [hasStarted, setHasStarted] = useState(false);  // Başlama durumunu izlemek için state
 
     // Referanslar
     const workerRef = useRef(null);

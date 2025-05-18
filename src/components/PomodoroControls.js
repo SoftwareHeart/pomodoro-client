@@ -4,8 +4,9 @@ import { useNotification } from '../contexts/NotificationContext';
 function PomodoroControls({ isActive, onStart, onPause, onReset }) {
     const { playSound } = useNotification();
 
-    // Sadece ses çalma işlevini kullanalım, bildirimleri App.js'e bırakalım
+    // Buton tıklama sesleri için
     const handleStart = () => {
+        // Start butonuna tıklandığında ses çalma - başlangıç sesi Timer.js'de çalacak
         playSound('click');
         onStart();
     };

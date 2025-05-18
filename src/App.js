@@ -8,7 +8,6 @@ import StatisticsPanel from './components/StatisticsPanel';
 import ThemeSelector from './components/ThemeSelector';
 import NotificationSettings from './components/NotificationSettings';
 import NotificationsContainer from './components/NotificationsContainer';
-import ConfirmModal from './components/ConfirmModal';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import apiService from './services/api';
@@ -34,12 +33,6 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [resetFlag, setResetFlag] = useState(0);
-  const [confirmModal, setConfirmModal] = useState({
-    isOpen: false,
-    message: '',
-    onConfirm: () => { },
-    taskId: null
-  });
   const { showVisualNotification } = useNotification();
 
   // Sayfa yüklendiğinde görevleri getir
@@ -78,27 +71,35 @@ function AppContent() {
   };
 
   // Görev seçme işlemi için modal gösterme
+  // Görev seçme işlemi için yeni yaklaşım
   const handleSelectTask = (taskId) => {
-    if (isActive) {
-      // Modal göster
-      setConfirmModal({
-        isOpen: true,
-        message: "Zamanlayıcı çalışıyor. Görev değiştirmek istediğinize emin misiniz?",
-        onConfirm: () => confirmTaskChange(taskId),
-        taskId: taskId
-      });
+    // Eğer zamanlayıcı çalışıyorsa ve farklı bir görev seçilmeye çalışılıyorsa
+    if (isActive && activeTaskId !== taskId) {
+      if (window.confirm("Zamanlayıcı çalışıyor. Görev değiştirmek istediğinize emin misiniz?")) {
+        // Kullanıcı onayladı: zamanlayıcıyı durdur ve görevi değiştir
+        setIsActive(false);
+        setActiveTaskId(taskId);
+
+        // Seçilen görevi bul ve currentSession'a ata
+        const selectedTask = tasks.find(task => task.id === taskId);
+        setCurrentSession(selectedTask);
+
+        // Reset timer when task changes
+        setResetFlag(prev => prev + 1);
+      }
+      // Kullanıcı onaylamadı: hiçbir şey yapma
       return;
     }
 
-    // Doğrudan görev değiştir
-    changeTask(taskId);
-  };
+    // Zamanlayıcı çalışmıyorsa doğrudan görev değiştir
+    setActiveTaskId(taskId);
 
-  // Modal onaylandığında görev değiştirme
-  const confirmTaskChange = (taskId) => {
-    setIsActive(false);
-    changeTask(taskId);
-    setConfirmModal({ isOpen: false, message: '', onConfirm: () => { }, taskId: null });
+    // Seçilen görevi bul ve currentSession'a ata
+    const selectedTask = tasks.find(task => task.id === taskId);
+    setCurrentSession(selectedTask);
+
+    // Reset timer when task changes
+    setResetFlag(prev => prev + 1);
   };
 
   // Görev değiştirme ortak fonksiyonu
@@ -112,12 +113,6 @@ function AppContent() {
     // Reset timer when task changes
     setResetFlag(prev => prev + 1);
   };
-
-  // Modal kapatma
-  const closeConfirmModal = () => {
-    setConfirmModal({ isOpen: false, message: '', onConfirm: () => { }, taskId: null });
-  };
-
   // Görev silme
   const handleDeleteTask = async (taskId) => {
     try {
@@ -208,8 +203,8 @@ function AppContent() {
       )}
 
       <main>
-        <div className="app-container">
-          <div className="app-column">
+        <div className="app-column">
+          <div className="top-row">
             <div className="pomodoro-section">
               <Timer
                 duration={activeDuration}
@@ -249,19 +244,12 @@ function AppContent() {
             </div>
           </div>
 
-          <div className="stats-column">
+          {/* İstatistik panelini alt kısma taşıdık */}
+          <div className="bottom-row">
             <StatisticsPanel />
           </div>
         </div>
       </main>
-
-      {/* Onay modalını ekleyin */}
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        message={confirmModal.message}
-        onConfirm={() => confirmModal.onConfirm(confirmModal.taskId)}
-        onCancel={closeConfirmModal}
-      />
 
       {/* Bildirim konteynerini ekleyin */}
       <NotificationsContainer />
