@@ -226,10 +226,10 @@ function AppContent() {
                   <p>{tasks.find(task => task.id === activeTaskId)?.taskName}</p>
                 </div>
               )}
+              <TaskForm onAddTask={handleAddTask} />
             </div>
 
             <div className="tasks-section">
-              <TaskForm onAddTask={handleAddTask} />
 
               <div className="tasks-list-wrapper">
                 {loading ? (
@@ -245,8 +245,6 @@ function AppContent() {
               </div>
             </div>
           </div>
-
-          {/* İstatistik panelini alt kısma taşıdık */}
           <div className="bottom-row">
             <StatisticsPanel />
           </div>

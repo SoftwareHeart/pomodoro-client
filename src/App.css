@@ -229,7 +229,6 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: fit-content;
   border: 1px solid var(--color-border);
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
@@ -2091,6 +2090,54 @@ button:active {
   height: 100%;
 }
 
+
+/* Verimlilik İçgörüleri için Ek Stiller */
+.productivity-insights {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.insight-card {
+  background-color: rgba(var(--color-panel-rgb), 0.6);
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  padding: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+}
+
+.insight-content h4 {
+  margin: 0 0 6px 0;
+  font-size: 0.95rem;
+  color: var(--color-foreground);
+}
+
+.insight-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-foreground);
+  opacity: 0.8;
+}
+
+/* Koyu tema için ek düzenlemeler */
+:root[data-theme="dark"] .insight-card {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+:root[data-theme="dark"] .insight-content h4 {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="dark"] .insight-content p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* Koyu tema için ek ayarlar */
 :root[data-theme="dark"] .task-search {
   background-color: rgba(255, 255, 255, 0.05);
@@ -2148,4 +2195,147 @@ button:active {
 
 :root[data-theme="dark"] .progress-bar {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Yeni Kullanıcı Karşılama Ekranı */
+.new-user .welcome-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px;
+  text-align: center;
+}
+
+.welcome-icon {
+  color: var(--color-primary);
+  margin-bottom: 20px;
+  opacity: 0.8;
+}
+
+.new-user h2 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: var(--color-foreground);
+}
+
+.new-user p {
+  max-width: 500px;
+  margin-bottom: 30px;
+  color: var(--color-foreground);
+  opacity: 0.8;
+}
+
+.getting-started,
+.welcome-tips {
+  width: 100%;
+  max-width: 500px;
+  text-align: left;
+  margin-bottom: 25px;
+  padding: 20px;
+  border-radius: 10px;
+  background-color: rgba(var(--color-panel-rgb), 0.5);
+  border: 1px solid var(--color-border);
+}
+
+.getting-started h3,
+.welcome-tips h3 {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  color: var(--color-foreground);
+}
+
+.getting-started ol,
+.welcome-tips ul {
+  padding-left: 20px;
+}
+
+.getting-started li,
+.welcome-tips li {
+  margin-bottom: 8px;
+  color: var(--color-foreground);
+  opacity: 0.8;
+}
+
+/* Boş İstatistik Mesajı */
+.empty-stats-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--color-foreground);
+  opacity: 0.7;
+}
+
+.empty-stats-message svg {
+  margin-bottom: 15px;
+  opacity: 0.4;
+}
+
+.empty-stats-message h3 {
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.empty-stats-message p {
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+/* Koyu Tema için Ek Düzenlemeler */
+:root[data-theme="dark"] .getting-started,
+:root[data-theme="dark"] .welcome-tips {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+:root[data-theme="dark"] .welcome-icon {
+  opacity: 0.9;
+}
+
+/* Verimlilik İçgörüleri için Ek Stiller */
+.productivity-insights {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.insight-card {
+  background-color: rgba(var(--color-panel-rgb), 0.6);
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  padding: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+}
+
+.insight-content h4 {
+  margin: 0 0 6px 0;
+  font-size: 0.95rem;
+  color: var(--color-foreground);
+}
+
+.insight-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-foreground);
+  opacity: 0.8;
+}
+
+/* Koyu tema için ek düzenlemeler */
+:root[data-theme="dark"] .insight-card {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+:root[data-theme="dark"] .insight-content h4 {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="dark"] .insight-content p {
+  color: rgba(255, 255, 255, 0.8);
 }
