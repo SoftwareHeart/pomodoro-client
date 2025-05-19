@@ -14,7 +14,28 @@ function NotificationsContainer() {
             const { message, type, duration } = event.detail;
             const id = Date.now();
 
-            setNotifications(prev => [...prev, { id, message, type, duration }]);
+            // Eski bildirimleri kontrol et - aynı mesajdan var mı?
+            const existingMessageIndex = notifications.findIndex(
+                n => n.message === message && n.type === type
+            );
+
+            if (existingMessageIndex !== -1) {
+                // Aynı mesajı güncelle - süresini yenile
+                setNotifications(prev => {
+                    const newNotifications = [...prev];
+                    newNotifications[existingMessageIndex] = {
+                        ...newNotifications[existingMessageIndex],
+                        id, // Yeni ID atadık, böylece aynı mesaj gibi görünse de yeni bildirimi fark eder
+                    };
+                    return newNotifications;
+                });
+            } else {
+                // Yeni bildirim ekle
+                setNotifications(prev => [
+                    ...prev,
+                    { id, message, type, duration: duration || 5000 }
+                ]);
+            }
         };
 
         document.addEventListener('notification', handleNotification);
@@ -22,11 +43,14 @@ function NotificationsContainer() {
         return () => {
             document.removeEventListener('notification', handleNotification);
         };
-    }, []);
+    }, [notifications]);
+
+    // Maksimum 5 bildirim göster
+    const visibleNotifications = notifications.slice(-5);
 
     return (
         <div className="notifications-container">
-            {notifications.map(notification => (
+            {visibleNotifications.map(notification => (
                 <Notification
                     key={notification.id}
                     message={notification.message}

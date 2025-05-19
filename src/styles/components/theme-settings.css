@@ -187,6 +187,8 @@
 
 .close-settings {
     width: 100%;
+    border-radius: 10px;
+    padding: 5px;
     margin-top: var(--spacing-sm);
     background-color: var(--color-secondary);
 }

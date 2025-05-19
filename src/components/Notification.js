@@ -1,32 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-function Notification({ message, type, duration, onClose }) {
+function Notification({ message, type = 'info', duration = 5000, onClose }) {
     const [isVisible, setIsVisible] = useState(false);
+    const timerRef = useRef(null);
+    const animationTimeoutRef = useRef(null);
 
     // Bileşen monte edildiğinde animasyonlu gösterme için
     useEffect(() => {
-        const showTimeout = setTimeout(() => {
+        // Kısa bir gecikme ile animasyonu başlat
+        animationTimeoutRef.current = setTimeout(() => {
             setIsVisible(true);
-        }, 10); // Küçük bir gecikme ile animasyonu başlat
+        }, 10);
 
-        return () => clearTimeout(showTimeout);
+        return () => {
+            if (animationTimeoutRef.current) {
+                clearTimeout(animationTimeoutRef.current);
+            }
+        };
     }, []);
 
     // Otomatik kapanma
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsVisible(false);
+        if (duration && duration > 0) {
+            timerRef.current = setTimeout(() => {
+                handleClose();
+            }, duration);
+        }
 
-            // Animasyon tamamlandıktan sonra bildirimi kaldır
-            const closeTimeout = setTimeout(() => {
-                onClose();
-            }, 300); // Geçiş animasyonu süresi
+        return () => {
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
+            }
+        };
+    }, [duration]);
 
-            return () => clearTimeout(closeTimeout);
-        }, duration);
+    const handleClose = () => {
+        setIsVisible(false);
 
-        return () => clearTimeout(timer);
-    }, [duration, onClose]);
+        // Animasyon tamamlandıktan sonra bildirimi kaldır
+        setTimeout(() => {
+            onClose();
+        }, 300); // Geçiş animasyonu süresi
+    };
+
+    // Fare üzerine gelince zamanlayıcıyı durdur
+    const handleMouseEnter = () => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+        }
+    };
+
+    // Fare ayrıldığında zamanlayıcıyı yeniden başlat
+    const handleMouseLeave = () => {
+        if (duration && duration > 0) {
+            timerRef.current = setTimeout(() => {
+                handleClose();
+            }, duration / 2); // Yarı sürede kapat
+        }
+    };
 
     // Bildirim tipi için icon seçimi
     const getIcon = () => {
@@ -66,15 +97,26 @@ function Notification({ message, type, duration, onClose }) {
     };
 
     return (
-        <div className={`notification ${type} ${isVisible ? 'visible' : 'hidden'}`}>
+        <div
+            className={`notification ${type} ${isVisible ? 'visible' : 'hidden'}`}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            style={{ '--notification-duration': `${duration}ms` }}
+            aria-live="polite"
+            role="alert"
+        >
             <div className="notification-icon">
                 {getIcon()}
             </div>
             <div className="notification-content">
-                <span className="notification-message">{message}</span>
+                <p className="notification-message">{message}</p>
             </div>
-            <button className="notification-close" onClick={() => setIsVisible(false)}>
-                &times;
+            <button
+                className="notification-close"
+                onClick={handleClose}
+                aria-label="Bildirimi kapat"
+            >
+                ×
             </button>
         </div>
     );
