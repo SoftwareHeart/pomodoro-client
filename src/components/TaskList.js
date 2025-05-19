@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import PerfectScrollbar from 'react-perfect-scrollbar';
+import 'react-perfect-scrollbar/dist/css/styles.css';
 import ConfirmModal from './ConfirmModal';
 
 function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId }) {
@@ -9,16 +11,27 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId }) {
     });
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all'); // 'all', 'active', 'completed'
-    const [isScrollable, setIsScrollable] = useState(false);
+    const [showTopShadow, setShowTopShadow] = useState(false);
+    const [showBottomShadow, setShowBottomShadow] = useState(true);
 
-    const listRef = useRef(null);
+    const scrollbarRef = useRef(null);
 
-    // Liste kaydırılabilir mi kontrolü
+    // Scroll olayını izleme fonksiyonu
+    const handleScroll = (e) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.target;
+        setShowTopShadow(scrollTop > 10);
+        setShowBottomShadow(scrollTop + clientHeight < scrollHeight - 10);
+    };
+
+    // Görev listesi değiştiğinde alt gölgeyi kontrol et
     useEffect(() => {
-        if (listRef.current) {
-            console.log('Scroll height:', listRef.current.scrollHeight);
-            console.log('Client height:', listRef.current.clientHeight);
-            setIsScrollable(listRef.current.scrollHeight > listRef.current.clientHeight);
+        // İçerik boyutları güncellendiğinde bottom shadow kontrolü
+        if (scrollbarRef.current) {
+            const scrollElement = scrollbarRef.current._container;
+            if (scrollElement) {
+                const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+                setShowBottomShadow(scrollTop + clientHeight < scrollHeight - 10);
+            }
         }
     }, [tasks, filter, searchTerm]);
 
@@ -195,85 +208,100 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId }) {
                     </div>
                 ) : (
                     <div className="task-list-scroll-container">
-                        {isScrollable && <div className="scroll-shadow top"></div>}
-                        <ul ref={listRef} className="task-list-items">
-                            {filteredTasks.map(task => (
-                                <li
-                                    key={task.id}
-                                    className={`task-item ${task.id === activeTaskId ? 'active' : ''} ${task.isCompleted ? 'completed' : ''}`}
-                                    onClick={() => onSelectTask(task.id)}
-                                >
-                                    <div className="task-info">
-                                        <div className="task-header">
-                                            <span className="task-name">{task.taskName}</span>
-                                            {task.isCompleted && (
-                                                <span className="completed-badge">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                                    </svg>
-                                                    Tamamlandı
-                                                </span>
-                                            )}
-                                        </div>
+                        {/* Gölge efektleri */}
+                        {showTopShadow && <div className="scroll-shadow top"></div>}
+                        {showBottomShadow && <div className="scroll-shadow bottom"></div>}
 
-                                        <div className="task-meta">
-                                            <span className="task-duration">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <circle cx="12" cy="12" r="10"></circle>
-                                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                                </svg>
-                                                {task.duration} dk
-                                            </span>
-                                        </div>
-
-                                        <div className="task-dates">
-                                            <div className="date-item">
-                                                <span className="date-label">Eklenme:</span>
-                                                <div className="date-info">
-                                                    <span className="date-relative">{formatRelativeDate(task.startTime)}</span>
-                                                    <span className="date-full" title={formatDateTime(task.startTime)}>
+                        {/* Perfect Scrollbar kullanımı */}
+                        <PerfectScrollbar
+                            ref={scrollbarRef}
+                            options={{
+                                wheelSpeed: 2,
+                                wheelPropagation: true, // Bu değeri true olarak değiştirin
+                                minScrollbarLength: 20,
+                                swipeEasing: true
+                            }}
+                            onScrollY={handleScroll}
+                            className="task-scrollbar-container"
+                        >
+                            <ul className="task-list-items">
+                                {filteredTasks.map(task => (
+                                    <li
+                                        key={task.id}
+                                        className={`task-item ${task.id === activeTaskId ? 'active' : ''} ${task.isCompleted ? 'completed' : ''}`}
+                                        onClick={() => onSelectTask(task.id)}
+                                    >
+                                        <div className="task-info">
+                                            <div className="task-header">
+                                                <span className="task-name">{task.taskName}</span>
+                                                {task.isCompleted && (
+                                                    <span className="completed-badge">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                            <circle cx="12" cy="12" r="10"></circle>
-                                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
                                                         </svg>
+                                                        Tamamlandı
                                                     </span>
-                                                </div>
+                                                )}
                                             </div>
 
-                                            {task.isCompleted && task.endTime && (
+                                            <div className="task-meta">
+                                                <span className="task-duration">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                                    </svg>
+                                                    {task.duration} dk
+                                                </span>
+                                            </div>
+
+                                            <div className="task-dates">
                                                 <div className="date-item">
-                                                    <span className="date-label">Tamamlanma:</span>
+                                                    <span className="date-label">Eklenme:</span>
                                                     <div className="date-info">
-                                                        <span className="date-relative">{formatRelativeDate(task.endTime)}</span>
-                                                        <span className="date-full" title={formatDateTime(task.endTime)}>
+                                                        <span className="date-relative">{formatRelativeDate(task.startTime)}</span>
+                                                        <span className="date-full" title={formatDateTime(task.startTime)}>
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                                                <circle cx="12" cy="12" r="10"></circle>
+                                                                <polyline points="12 6 12 12 16 14"></polyline>
                                                             </svg>
                                                         </span>
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
 
-                                    <div className="task-actions">
-                                        <button
-                                            className="delete-btn"
-                                            onClick={(e) => handleDeleteClick(e, task.id, task.taskName)}
-                                            aria-label="Görevi Sil"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <polyline points="3 6 5 6 21 6"></polyline>
-                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                        {isScrollable && <div className="scroll-shadow bottom"></div>}
+                                                {task.isCompleted && task.endTime && (
+                                                    <div className="date-item">
+                                                        <span className="date-label">Tamamlanma:</span>
+                                                        <div className="date-info">
+                                                            <span className="date-relative">{formatRelativeDate(task.endTime)}</span>
+                                                            <span className="date-full" title={formatDateTime(task.endTime)}>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                                                </svg>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="task-actions">
+                                            <button
+                                                className="delete-btn"
+                                                onClick={(e) => handleDeleteClick(e, task.id, task.taskName)}
+                                                aria-label="Görevi Sil"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </PerfectScrollbar>
                     </div>
                 )}
             </div>

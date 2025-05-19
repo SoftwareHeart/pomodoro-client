@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import 'react-perfect-scrollbar/dist/css/styles.css';
 import Timer from './components/Timer';
 import PomodoroControls from './components/PomodoroControls';
 import TaskForm from './components/TaskForm';
