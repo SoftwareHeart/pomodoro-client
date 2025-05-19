@@ -25,7 +25,7 @@ function ThemeSelector() {
     const getThemePreviewColor = (themeName) => {
         switch (themeName) {
             case 'light': return '#e74c3c';  // Light tema birincil rengi
-            case 'dark': return '#e74c3c';   // Dark tema birincil rengi
+            case 'dark': return '#2c3e50';   // Dark tema birincil rengi
             case 'blue': return '#00796b';   // Blue tema birincil rengi
             default: return '#e74c3c';
         }

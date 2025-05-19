@@ -423,7 +423,7 @@
 
 /* PerfectScrollbar özelleştirmeleri */
 .task-scrollbar-container {
-    height: 400px !important;
+    height: 424.5px !important;
     /* Sabit yükseklik ver */
     min-height: 200px !important;
     max-height: 600px !important;

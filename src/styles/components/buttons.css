@@ -113,19 +113,20 @@
 
 /* İptal ve onay butonları */
 .cancel-btn {
-    background-color: transparent;
-    color: var(--color-foreground);
-    border: 1px solid var(--color-border);
+    background-color: #95a5a6;
+    color: white;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
     padding: 10px 15px;
-}
-
-.cancel-btn:hover {
-    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .add-task-btn {
     background-color: var(--color-primary);
     color: white;
+    font-weight: 500;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: 10px 15px;
 }
 
 /* Form butonları */
