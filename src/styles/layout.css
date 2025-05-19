@@ -1,0 +1,178 @@
+/* src/styles/layout.css */
+
+.app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+}
+
+.app-header-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: var(--spacing-xxl);
+    display: flex;
+    justify-content: center;
+}
+
+.app-controls {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    display: flex;
+    gap: var(--spacing-md);
+    z-index: 10;
+}
+
+.app-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+    width: 100%;
+}
+
+.top-row {
+    display: flex;
+    gap: var(--spacing-xl);
+    width: 100%;
+}
+
+.bottom-row {
+    width: 100%;
+}
+
+.pomodoro-section,
+.tasks-section {
+    flex: 1;
+    min-width: 300px;
+}
+
+/* Flex yardımcıları */
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.items-start {
+    align-items: flex-start;
+}
+
+.items-end {
+    align-items: flex-end;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.justify-start {
+    justify-content: flex-start;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+.gap-xs {
+    gap: var(--spacing-xs);
+}
+
+.gap-sm {
+    gap: var(--spacing-sm);
+}
+
+.gap-md {
+    gap: var(--spacing-md);
+}
+
+.gap-lg {
+    gap: var(--spacing-lg);
+}
+
+/* Margin yardımcıları */
+.m-0 {
+    margin: 0;
+}
+
+.mt-xs {
+    margin-top: var(--spacing-xs);
+}
+
+.mt-sm {
+    margin-top: var(--spacing-sm);
+}
+
+.mt-md {
+    margin-top: var(--spacing-md);
+}
+
+.mt-lg {
+    margin-top: var(--spacing-lg);
+}
+
+.mb-xs {
+    margin-bottom: var(--spacing-xs);
+}
+
+.mb-sm {
+    margin-bottom: var(--spacing-sm);
+}
+
+.mb-md {
+    margin-bottom: var(--spacing-md);
+}
+
+.mb-lg {
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Padding yardımcıları */
+.p-xs {
+    padding: var(--spacing-xs);
+}
+
+.p-sm {
+    padding: var(--spacing-sm);
+}
+
+.p-md {
+    padding: var(--spacing-md);
+}
+
+.p-lg {
+    padding: var(--spacing-lg);
+}
+
+/* Responsive özellikler */
+@media (max-width: 1024px) {
+    .app-container {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .top-row {
+        flex-direction: column;
+    }
+
+    .pomodoro-section,
+    .tasks-section {
+        width: 100%;
+    }
+}

@@ -1,0 +1,18 @@
+/* src/styles/themes/light.css */
+
+:root[data-theme="light"] {
+    --color-background: #f9f9f9;
+    --color-background-rgb: 249, 249, 249;
+    --color-foreground: #333;
+    --color-foreground-rgb: 51, 51, 51;
+    --color-primary: #e74c3c;
+    --color-primary-rgb: 231, 76, 60;
+    --color-secondary: #3498db;
+    --color-secondary-rgb: 52, 152, 219;
+    --color-accent: #2ecc71;
+    --color-accent-rgb: 46, 204, 113;
+    --color-panel: #ffffff;
+    --color-panel-rgb: 255, 255, 255;
+    --color-border: #eeeeee;
+    --color-border-rgb: 238, 238, 238;
+}

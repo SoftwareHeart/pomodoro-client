@@ -1,0 +1,18 @@
+/* src/styles/themes/blue.css */
+
+:root[data-theme="blue"] {
+    --color-background: #e0f7fa;
+    --color-background-rgb: 224, 247, 250;
+    --color-foreground: #263238;
+    --color-foreground-rgb: 38, 50, 56;
+    --color-primary: #00796b;
+    --color-primary-rgb: 0, 121, 107;
+    --color-secondary: #0277bd;
+    --color-secondary-rgb: 2, 119, 189;
+    --color-accent: #ffa000;
+    --color-accent-rgb: 255, 160, 0;
+    --color-panel: #ffffff;
+    --color-panel-rgb: 255, 255, 255;
+    --color-border: #b2ebf2;
+    --color-border-rgb: 178, 235, 242;
+}

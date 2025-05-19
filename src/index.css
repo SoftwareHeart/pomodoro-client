@@ -1,13 +1,25 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+/* src/index.css */
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
+/* Değişkenler ve temel CSS */
+@import './styles/variables.css';
+@import './styles/reset.css';
+@import './styles/typography.css';
+@import './styles/layout.css';
+@import './styles/animations.css';
+@import './styles/utilities.css';
+
+/* Temalar */
+@import './styles/themes/light.css';
+@import './styles/themes/dark.css';
+@import './styles/themes/blue.css';
+
+/* Bileşenler */
+@import './styles/components/buttons.css';
+@import './styles/components/timer.css';
+@import './styles/components/task-form.css';
+@import './styles/components/task-list.css';
+@import './styles/components/notification.css';
+@import './styles/components/pomodoro-controls.css';
+@import './styles/components/modal.css';
+@import './styles/components/statistics.css';
+@import './styles/components/theme-settings.css';

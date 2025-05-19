@@ -1,0 +1,124 @@
+/* src/styles/themes/dark.css */
+
+:root[data-theme="dark"] {
+    --color-background: #2c3e50;
+    --color-background-rgb: 44, 62, 80;
+    --color-foreground: #ecf0f1;
+    --color-foreground-rgb: 236, 240, 241;
+    --color-primary: #e74c3c;
+    --color-primary-rgb: 231, 76, 60;
+    --color-secondary: #3498db;
+    --color-secondary-rgb: 52, 152, 219;
+    --color-accent: #2ecc71;
+    --color-accent-rgb: 46, 204, 113;
+    --color-panel: #34495e;
+    --color-panel-rgb: 52, 73, 94;
+    --color-border: #476481;
+    --color-border-rgb: 71, 100, 129;
+}
+
+/* Koyu tema için ek düzenlemeler */
+:root[data-theme="dark"] .insight-card {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+:root[data-theme="dark"] .insight-content h4 {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="dark"] .insight-content p {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+:root[data-theme="dark"] .task-search {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] .task-filters button {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] .task-filters button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .scroll-shadow.top {
+    background: linear-gradient(to bottom,
+            rgba(var(--color-panel-rgb), 0.9) 0%,
+            rgba(var(--color-panel-rgb), 0) 100%);
+}
+
+:root[data-theme="dark"] .scroll-shadow.bottom {
+    background: linear-gradient(to top,
+            rgba(var(--color-panel-rgb), 0.9) 0%,
+            rgba(var(--color-panel-rgb), 0) 100%);
+}
+
+:root[data-theme="dark"] .statistics-panel.modern,
+:root[data-theme="dark"] .stat-card,
+:root[data-theme="dark"] .chart-container,
+:root[data-theme="dark"] .statistics-summary.modern,
+:root[data-theme="dark"] .productivity-insights {
+    background-color: var(--color-panel);
+    border-color: var(--color-border);
+}
+
+:root[data-theme="dark"] .statistics-nav-tabs {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+:root[data-theme="dark"] .statistics-nav-tabs button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] .statistics-nav-tabs button.active {
+    background-color: var(--color-panel);
+}
+
+:root[data-theme="dark"] .stat-icon {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] .insight-card {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] .progress-bar {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .chart-summary,
+:root[data-theme="dark"] .goal-progress-section,
+:root[data-theme="dark"] .insight-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="dark"] .goal-progress-bar {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .goal-label,
+:root[data-theme="dark"] .chart-stat-label {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+:root[data-theme="dark"] .goal-value,
+:root[data-theme="dark"] .chart-stat-value {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+:root[data-theme="dark"] .goal-progress-text {
+    color: var(--color-accent);
+}
+
+:root[data-theme="dark"] .chart-explanation {
+    color: rgba(255, 255, 255, 0.7);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .getting-started,
+:root[data-theme="dark"] .welcome-tips {
+    background-color: rgba(255, 255, 255, 0.03);
+}

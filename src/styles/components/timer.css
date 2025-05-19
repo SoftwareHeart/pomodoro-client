@@ -1,0 +1,47 @@
+/* src/styles/components/timer.css */
+
+.timer {
+    margin-bottom: var(--spacing-xl);
+}
+
+.time-display {
+    font-size: 5rem;
+    font-weight: bold;
+    color: var(--color-primary);
+    text-align: center;
+}
+
+.pomodoro-controls {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    justify-content: center;
+}
+
+.active-task {
+    text-align: center;
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+    width: 100%;
+}
+
+.active-task h3 {
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-foreground);
+}
+
+.pomodoro-section {
+    flex: 0 0 auto;
+    background-color: var(--color-panel);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    align-items: center;
+    border: 1px solid var(--color-border);
+    transition: background-color var(--transition-normal),
+        border-color var(--transition-normal);
+}

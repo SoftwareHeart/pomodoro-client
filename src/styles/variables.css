@@ -1,0 +1,70 @@
+/* src/styles/variables.css */
+
+:root {
+    /* Renk Değişkenleri (Light tema için temel değerler) */
+    --color-background: #f9f9f9;
+    --color-background-rgb: 249, 249, 249;
+    --color-foreground: #333;
+    --color-foreground-rgb: 51, 51, 51;
+    --color-primary: #e74c3c;
+    --color-primary-rgb: 231, 76, 60;
+    --color-secondary: #3498db;
+    --color-secondary-rgb: 52, 152, 219;
+    --color-accent: #2ecc71;
+    --color-accent-rgb: 46, 204, 113;
+    --color-panel: #ffffff;
+    --color-panel-rgb: 255, 255, 255;
+    --color-border: #eeeeee;
+    --color-border-rgb: 238, 238, 238;
+
+    /* Ek renk değişkenleri */
+    --color-warning: #f39c12;
+    --color-error: #e74c3c;
+    --color-info: #3498db;
+    --color-success: #2ecc71;
+
+    /* Boyut ve Boşluk Değişkenleri */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-xxl: 48px;
+
+    /* Border Radius */
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
+    --border-radius-circle: 50%;
+
+    /* Gölgeler */
+    --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.15);
+
+    /* Tipografi */
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-size-xs: 0.75rem;
+    /* 12px */
+    --font-size-sm: 0.875rem;
+    /* 14px */
+    --font-size-md: 1rem;
+    /* 16px */
+    --font-size-lg: 1.25rem;
+    /* 20px */
+    --font-size-xl: 1.5rem;
+    /* 24px */
+    --font-size-xxl: 2rem;
+    /* 32px */
+
+    /* Geçiş Süreleri */
+    --transition-fast: 0.2s;
+    --transition-normal: 0.3s;
+    --transition-slow: 0.5s;
+
+    /* Z-indeks Değerleri */
+    --z-index-dropdown: 100;
+    --z-index-modal: 1000;
+    --z-index-notification: 2000;
+}

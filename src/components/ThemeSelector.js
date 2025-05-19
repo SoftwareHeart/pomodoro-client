@@ -1,3 +1,4 @@
+// src/components/ThemeSelector.js
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -19,6 +20,16 @@ function ThemeSelector() {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    // Tema renk önizlemelerini almak için yardımcı fonksiyon
+    const getThemePreviewColor = (themeName) => {
+        switch (themeName) {
+            case 'light': return '#e74c3c';  // Light tema birincil rengi
+            case 'dark': return '#e74c3c';   // Dark tema birincil rengi
+            case 'blue': return '#00796b';   // Blue tema birincil rengi
+            default: return '#e74c3c';
+        }
+    };
 
     return (
         <div className="theme-selector-container" ref={menuRef}>
@@ -57,12 +68,10 @@ function ThemeSelector() {
                             >
                                 <span
                                     className="theme-color-preview"
-                                    style={{ backgroundColor: themes[themeName].colors.primary }}
+                                    style={{ backgroundColor: getThemePreviewColor(themeName) }}
                                 ></span>
                                 <span className="theme-name">
-                                    {themeName === 'light' ? 'Açık Tema' :
-                                        themeName === 'dark' ? 'Koyu Tema' :
-                                            themeName === 'blue' ? 'Mavi Tema' : themeName}
+                                    {themes[themeName].displayName}
                                 </span>
                             </button>
                         ))}
