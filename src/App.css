@@ -1542,7 +1542,6 @@ button:active {
 .chart-summary {
   margin-top: 16px;
   padding: 16px;
-  background-color: rgba(var(--color-panel-rgb), 0.6);
   border-radius: 8px;
   border: 1px solid var(--color-border);
 }
@@ -2262,7 +2261,6 @@ button:active {
 }
 
 .insight-card {
-  background-color: rgba(var(--color-panel-rgb), 0.6);
   border-radius: 10px;
   border: 1px solid var(--color-border);
   padding: 12px;
@@ -2464,7 +2462,6 @@ button:active {
 }
 
 .insight-card {
-  background-color: rgba(var(--color-panel-rgb), 0.6);
   border-radius: 10px;
   border: 1px solid var(--color-border);
   padding: 12px;
@@ -2507,7 +2504,6 @@ button:active {
 .goal-progress-section {
   margin-top: 20px;
   padding: 16px;
-  background-color: rgba(var(--color-panel-rgb), 0.5);
   border-radius: 8px;
   border: 1px solid var(--color-border);
 }
