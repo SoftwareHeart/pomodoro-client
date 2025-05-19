@@ -355,12 +355,68 @@
     display: flex;
     flex-direction: column;
     height: calc(100vh - 400px);
-    min-height: 400px;
+    min-height: 300px;
     max-height: 600px;
+    overflow: hidden;
 }
 
 .tasks-section {
     display: flex;
     flex-direction: column;
     height: 100%;
+}
+
+/* Koyu tema için ek düzenlemeler */
+:root[data-theme="dark"] .task-search {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] .task-filters button {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] .task-filters button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .scroll-shadow.top {
+    background: linear-gradient(to bottom,
+            rgba(var(--color-panel-rgb), 0.9) 0%,
+            rgba(var(--color-panel-rgb), 0) 100%);
+}
+
+:root[data-theme="dark"] .scroll-shadow.bottom {
+    background: linear-gradient(to top,
+            rgba(var(--color-panel-rgb), 0.9) 0%,
+            rgba(var(--color-panel-rgb), 0) 100%);
+}
+
+/* Responsive düzenlemeler */
+@media (max-height: 700px) {
+    .tasks-list-wrapper {
+        height: calc(100vh - 300px);
+        min-height: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .tasks-list-wrapper {
+        height: 400px;
+    }
+
+    .task-list-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .task-list-toolbar {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .task-item {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .date-label {
+        min-width: 70px;
+    }
 }

@@ -16,6 +16,8 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId }) {
     // Liste kaydırılabilir mi kontrolü
     useEffect(() => {
         if (listRef.current) {
+            console.log('Scroll height:', listRef.current.scrollHeight);
+            console.log('Client height:', listRef.current.clientHeight);
             setIsScrollable(listRef.current.scrollHeight > listRef.current.clientHeight);
         }
     }, [tasks, filter, searchTerm]);
