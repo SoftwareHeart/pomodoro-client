@@ -246,16 +246,13 @@ function AppContent() {
             <div className="tasks-section">
               <TaskForm onAddTask={handleAddTask} />
               <div className="tasks-list-wrapper">
-                {loading ? (
-                  <p>Görevler yükleniyor...</p>
-                ) : (
-                  <TaskList
-                    tasks={tasks}
-                    activeTaskId={activeTaskId}
-                    onSelectTask={handleSelectTask}
-                    onDeleteTask={handleDeleteTask}
-                  />
-                )}
+                <TaskList
+                  tasks={tasks}
+                  activeTaskId={activeTaskId}
+                  onSelectTask={handleSelectTask}
+                  onDeleteTask={handleDeleteTask}
+                  loading={loading}
+                />
               </div>
             </div>
           </div>

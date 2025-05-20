@@ -1,4 +1,6 @@
 /* src/styles/layout.css */
+@import './components/error-message.css';
+@import './components/spinner.css';
 
 .app {
     max-width: 1200px;

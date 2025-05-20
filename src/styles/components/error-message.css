@@ -1,0 +1,57 @@
+.error-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--color-error);
+    color: white;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    animation: slideDown 0.3s ease-out;
+    max-width: 90%;
+    width: auto;
+}
+
+.error-message p {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+.error-message button {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: var(--font-size-xs);
+    transition: background-color var(--transition-fast);
+}
+
+.error-message button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes slideDown {
+    from {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+/* Koyu tema için ek düzenlemeler */
+:root[data-theme="dark"] .error-message {
+    background-color: var(--color-error);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

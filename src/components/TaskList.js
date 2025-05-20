@@ -3,7 +3,7 @@ import PerfectScrollbar from 'react-perfect-scrollbar';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import ConfirmModal from './ConfirmModal';
 
-function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId }) {
+function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId, loading }) {
     const [confirmModal, setConfirmModal] = useState({
         isOpen: false,
         taskId: null,
@@ -187,7 +187,12 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId }) {
                     </div>
                 </div>
 
-                {filteredTasks.length === 0 ? (
+                {loading ? (
+                    <div className="spinner-container">
+                        <div className="spinner"></div>
+                        <div className="spinner-text">Görevler yükleniyor...</div>
+                    </div>
+                ) : filteredTasks.length === 0 ? (
                     <div className="empty-tasks">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="8" y1="6" x2="21" y2="6"></line>
