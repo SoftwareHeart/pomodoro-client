@@ -3,6 +3,9 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 
 const AuthContext = createContext();
 
+// API URL'yi dinamik olarak belirleme
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:7023/api';
+
 export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -29,7 +32,7 @@ export const AuthProvider = ({ children }) => {
         setError(null);
 
         try {
-            const response = await fetch('https://localhost:7023/api/User/login', {
+            const response = await fetch(`${API_URL}/User/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -69,7 +72,7 @@ export const AuthProvider = ({ children }) => {
         setError(null);
 
         try {
-            const response = await fetch('https://localhost:7023/api/User/register', {
+            const response = await fetch(`${API_URL}/User/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

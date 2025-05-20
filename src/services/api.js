@@ -1,8 +1,8 @@
 // src/services/api.js
 import axios from 'axios';
 
-// API'nın URL'sini HTTPS olarak ayarla
-const API_URL = 'https://localhost:7023/api';
+// Docker geliştirme ortamında HTTP kullanıyoruz
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:7023/api';
 
 // Default API servisini oluştur - yetkilendirme gerektirmeyen çağrılar için
 const apiService = {
