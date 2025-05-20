@@ -4,7 +4,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 const AuthContext = createContext();
 
 // API URL'yi dinamik olarak belirleme
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:7023/api';
+const API_URL = 'https://localhost:7023/api';
 
 export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);

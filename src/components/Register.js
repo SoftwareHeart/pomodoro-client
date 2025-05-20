@@ -73,6 +73,7 @@ function Register() {
                             onChange={(e) => setPassword(e.target.value)}
                             required
                             minLength="6"
+                            autoComplete="new-password"
                         />
                         <small>Şifreniz en az 6 karakter uzunluğunda olmalıdır</small>
                     </div>
@@ -84,6 +85,7 @@ function Register() {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
+                            autoComplete="new-password"
                         />
                     </div>
                     <button
