@@ -562,75 +562,165 @@ function StatisticsPanel() {
                     {activeTab === 'charts' && (
                         <>
                             {chartData.length > 0 ? (
-                                <div className="statistics-charts modern">
+                                <div className="statistics-charts">
                                     <div className="chart-container">
-                                        <h3>Haftalık Aktivite</h3>
+                                        <div className="chart-header">
+                                            <div className="chart-title">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                                                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                                                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                                                </svg>
+                                                <h3>Haftalık Aktivite</h3>
+                                            </div>
+                                            <div className="chart-legend">
+                                                <div className="legend-item">
+                                                    <div className="legend-color" style={{ backgroundColor: COLORS[0] }}></div>
+                                                    <span>Tamamlanan Pomodoro</span>
+                                                </div>
+                                                <div className="legend-item">
+                                                    <div className="legend-color" style={{ backgroundColor: COLORS[1] }}></div>
+                                                    <span>Çalışma Süresi</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div className="chart-wrapper">
-                                            <ResponsiveContainer width="100%" height={220}>
+                                            <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                                                    <YAxis axisLine={false} tickLine={false} />
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                                                    <XAxis
+                                                        dataKey="name"
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        tick={{ fill: 'var(--color-foreground)', opacity: 0.8 }}
+                                                    />
+                                                    <YAxis
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        tick={{ fill: 'var(--color-foreground)', opacity: 0.8 }}
+                                                    />
                                                     <Tooltip
-                                                        formatter={(value, name, props) => {
-                                                            // name parametresi, hangi veri serisinin (dataKey) tooltip'inin gösterildiğini belirtir
-                                                            if (name === 'tamamlanan') {
-                                                                return [`${value} pomodoro`, 'Tamamlanan'];
-                                                            } else if (name === 'dakika') {
-                                                                return [`${value} dk`, 'Çalışma Süresi'];
+                                                        content={({ active, payload, label }) => {
+                                                            if (active && payload && payload.length) {
+                                                                return (
+                                                                    <div className="chart-tooltip">
+                                                                        <div className="chart-tooltip-label">{label}</div>
+                                                                        {payload.map((entry, index) => (
+                                                                            <div key={index} className="chart-tooltip-value" style={{ color: entry.color }}>
+                                                                                {entry.name === 'tamamlanan'
+                                                                                    ? `${entry.value} pomodoro`
+                                                                                    : `${entry.value} dk`}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                );
                                                             }
-                                                            return [value, name];
-                                                        }}
-                                                        labelFormatter={(label) => `${label}`}
-                                                        contentStyle={{
-                                                            backgroundColor: 'var(--color-panel)',
-                                                            borderRadius: '8px',
-                                                            border: '1px solid var(--color-border)',
-                                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                                            return null;
                                                         }}
                                                     />
-                                                    <Legend verticalAlign="top" height={36} />
                                                     <Bar
                                                         dataKey="tamamlanan"
                                                         name="Tamamlanan"
                                                         fill={COLORS[0]}
                                                         radius={[4, 4, 0, 0]}
+                                                        maxBarSize={40}
                                                     />
                                                     <Bar
                                                         dataKey="dakika"
                                                         name="Dakika"
                                                         fill={COLORS[1]}
                                                         radius={[4, 4, 0, 0]}
+                                                        maxBarSize={40}
                                                     />
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         </div>
+                                        <div className="chart-summary">
+                                            <div className="chart-stat-item">
+                                                <span className="chart-stat-label">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                                    </svg>
+                                                    Toplam Tamamlanan
+                                                </span>
+                                                <span className="chart-stat-value">
+                                                    {weeklyStats.reduce((sum, day) => sum + day.tamamlanan, 0)} pomodoro
+                                                </span>
+                                            </div>
+                                            <div className="chart-stat-item">
+                                                <span className="chart-stat-label">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                                    </svg>
+                                                    Toplam Süre
+                                                </span>
+                                                <span className="chart-stat-value">
+                                                    {weeklyStats.reduce((sum, day) => sum + day.dakika, 0)} dk
+                                                </span>
+                                            </div>
+                                            <div className="chart-stat-item">
+                                                <span className="chart-stat-label">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                                        <polyline points="17 6 23 6 23 12"></polyline>
+                                                    </svg>
+                                                    Günlük Ortalama
+                                                </span>
+                                                <span className="chart-stat-value">
+                                                    {Math.round(weeklyStats.reduce((sum, day) => sum + day.tamamlanan, 0) / weeklyStats.length)} pomodoro
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="chart-container">
-                                        <h3>Günlük Verimlilik Trendi</h3>
+                                        <div className="chart-header">
+                                            <div className="chart-title">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                                    <polyline points="17 6 23 6 23 12"></polyline>
+                                                </svg>
+                                                <h3>Günlük Verimlilik Trendi</h3>
+                                            </div>
+                                            <div className="chart-legend">
+                                                <div className="legend-item">
+                                                    <div className="legend-color" style={{ backgroundColor: COLORS[2] }}></div>
+                                                    <span>Verimlilik</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div className="chart-wrapper">
-                                            <ResponsiveContainer width="100%" height={220}>
+                                            <ResponsiveContainer width="100%" height="100%">
                                                 <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                                                    <XAxis
+                                                        dataKey="name"
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        tick={{ fill: 'var(--color-foreground)', opacity: 0.8 }}
+                                                    />
                                                     <YAxis
                                                         axisLine={false}
                                                         tickLine={false}
                                                         domain={[0, 100]}
                                                         tickFormatter={(value) => `${value}%`}
+                                                        tick={{ fill: 'var(--color-foreground)', opacity: 0.8 }}
                                                     />
                                                     <Tooltip
-                                                        formatter={(value, name) => [
-                                                            `${Math.min(100, Math.round((value / 8) * 100))}%`,
-                                                            'Günlük Verimlilik'
-                                                        ]}
-                                                        labelFormatter={(name) => `${name} günü verimliliği`}
-                                                        contentStyle={{
-                                                            backgroundColor: 'var(--color-panel)',
-                                                            borderRadius: '8px',
-                                                            border: '1px solid var(--color-border)',
-                                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                                        content={({ active, payload, label }) => {
+                                                            if (active && payload && payload.length) {
+                                                                return (
+                                                                    <div className="chart-tooltip">
+                                                                        <div className="chart-tooltip-label">{label}</div>
+                                                                        <div className="chart-tooltip-value" style={{ color: COLORS[2] }}>
+                                                                            {`${Math.min(100, Math.round((payload[0].value / 8) * 100))}%`}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            return null;
                                                         }}
                                                     />
                                                     <Line
@@ -642,10 +732,57 @@ function StatisticsPanel() {
                                                         dot={{ r: 6, fill: COLORS[2], strokeWidth: 0 }}
                                                         activeDot={{ r: 8, fill: COLORS[2], stroke: 'white', strokeWidth: 2 }}
                                                     />
-                                                    {/* Hedef çizgisi (8 pomodoro = %100) */}
-                                                    <ReferenceLine y={8} stroke="#e74c3c" strokeDasharray="3 3" label="Hedef" />
+                                                    <ReferenceLine
+                                                        y={8}
+                                                        stroke="#e74c3c"
+                                                        strokeDasharray="3 3"
+                                                        label={{
+                                                            value: "Hedef",
+                                                            position: "right",
+                                                            fill: "#e74c3c",
+                                                            fontSize: 12
+                                                        }}
+                                                    />
                                                 </LineChart>
                                             </ResponsiveContainer>
+                                        </div>
+                                        <div className="chart-summary">
+                                            <div className="chart-stat-item">
+                                                <span className="chart-stat-label">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                                    </svg>
+                                                    En Yüksek Verimlilik
+                                                </span>
+                                                <span className="chart-stat-value">
+                                                    {Math.max(...chartData.map(day => Math.min(100, Math.round((day.tamamlanan / 8) * 100))))}%
+                                                </span>
+                                            </div>
+                                            <div className="chart-stat-item">
+                                                <span className="chart-stat-label">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                                    </svg>
+                                                    Ortalama Verimlilik
+                                                </span>
+                                                <span className="chart-stat-value">
+                                                    {Math.round(chartData.reduce((sum, day) => sum + Math.min(100, Math.round((day.tamamlanan / 8) * 100)), 0) / chartData.length)}%
+                                                </span>
+                                            </div>
+                                            <div className="chart-stat-item">
+                                                <span className="chart-stat-label">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                                        <polyline points="17 6 23 6 23 12"></polyline>
+                                                    </svg>
+                                                    Hedef Üzeri Günler
+                                                </span>
+                                                <span className="chart-stat-value">
+                                                    {chartData.filter(day => day.tamamlanan >= 8).length} gün
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -667,10 +804,12 @@ function StatisticsPanel() {
                         <>
                             {stats.totalCompletedSessions > 0 ? (
                                 <div className="statistics-trends">
-                                    <div className="chart-container">
-                                        <h3>Çalışma Süresi Trendi</h3>
-                                        <div className="chart-wrapper">
-                                            <ResponsiveContainer width="100%" height={220}>
+                                    <div className="trend-card">
+                                        <div className="trend-header">
+                                            <h3>Çalışma Süresi Trendi</h3>
+                                        </div>
+                                        <div className="trend-chart">
+                                            <ResponsiveContainer width="100%" height="100%">
                                                 <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                                     <XAxis dataKey="name" axisLine={false} tickLine={false} />
@@ -695,8 +834,6 @@ function StatisticsPanel() {
                                                         dot={{ r: 4, fill: COLORS[1], strokeWidth: 0 }}
                                                         activeDot={{ r: 6, fill: COLORS[1], stroke: 'white', strokeWidth: 2 }}
                                                     />
-
-                                                    {/* Ideal günlük çalışma süresi referans çizgisi (25*8 = 200 dk) */}
                                                     <ReferenceLine y={200} stroke="#e74c3c" strokeDasharray="3 3" label={{
                                                         value: "Hedef (200dk)",
                                                         position: 'right',
@@ -706,131 +843,105 @@ function StatisticsPanel() {
                                                 </LineChart>
                                             </ResponsiveContainer>
                                         </div>
-
-                                        {/* Grafik altına özet bilgiler */}
-                                        <div className="chart-summary">
-                                            <div className="chart-stats">
-                                                <div className="chart-stat-item">
-                                                    <span className="chart-stat-label">Haftalık Toplam:</span>
-                                                    <span className="chart-stat-value">
-                                                        {weeklyStats.reduce((sum, day) => sum + day.dakika, 0)} dk
-                                                    </span>
-                                                </div>
-
-                                                <div className="chart-stat-item">
-                                                    <span className="chart-stat-label">Günlük Ortalama:</span>
-                                                    <span className="chart-stat-value">
-                                                        {Math.round(weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / weeklyStats.length)} dk
-                                                    </span>
-                                                </div>
-
-                                                <div className="chart-stat-item">
-                                                    <span className="chart-stat-label">En Uzun Çalışma:</span>
-                                                    <span className="chart-stat-value">
-                                                        {Math.max(...weeklyStats.map(day => day.dakika))} dk
+                                        <div className="trend-stats">
+                                            <div className="trend-stat-item">
+                                                <span className="trend-stat-label">Haftalık Toplam</span>
+                                                <span className="trend-stat-value">
+                                                    {weeklyStats.reduce((sum, day) => sum + day.dakika, 0)} dk
+                                                </span>
+                                            </div>
+                                            <div className="trend-stat-item">
+                                                <span className="trend-stat-label">Günlük Ortalama</span>
+                                                <span className="trend-stat-value">
+                                                    {Math.round(weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / weeklyStats.length)} dk
+                                                </span>
+                                            </div>
+                                            <div className="trend-stat-item">
+                                                <span className="trend-stat-label">En Uzun Çalışma</span>
+                                                <span className="trend-stat-value">
+                                                    {Math.max(...weeklyStats.map(day => day.dakika))} dk
+                                                    <span className="trend-stat-day">
                                                         ({weeklyStats.find(day => day.dakika === Math.max(...weeklyStats.map(d => d.dakika)))?.name || ''})
                                                     </span>
-                                                </div>
-                                            </div>
-                                            <div className="goal-progress-section">
-                                                <h4>Haftalık Hedef İlerleme</h4>
-                                                <div className="goal-container">
-                                                    <div className="goal-details">
-                                                        <div className="goal-info">
-                                                            <span className="goal-label">Hedef:</span>
-                                                            <span className="goal-value">1400 dk (56 pomodoro)</span>
-                                                        </div>
-                                                        <div className="goal-info">
-                                                            <span className="goal-label">Tamamlanan:</span>
-                                                            <span className="goal-value">
-                                                                {weeklyStats.reduce((sum, day) => sum + day.dakika, 0)} dk
-                                                                ({Math.round(weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 25)} pomodoro)
-                                                            </span>
-                                                        </div>
-                                                        <div className="goal-info">
-                                                            <span className="goal-label">Kalan:</span>
-                                                            <span className="goal-value">
-                                                                {Math.max(0, 1400 - weeklyStats.reduce((sum, day) => sum + day.dakika, 0))} dk
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="goal-progress">
-                                                        <div className="goal-progress-bar">
-                                                            <div
-                                                                className="goal-progress-fill"
-                                                                style={{ width: `${Math.min(100, (weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 1400) * 100)}%` }}
-                                                            ></div>
-                                                        </div>
-                                                        <div className="goal-progress-text">
-                                                            {Math.round((weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 1400) * 100)}%
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="chart-explanation">
-                                                <p>Bu grafik haftalık çalışma sürenizin dağılımını göstermektedir. Referans çizgisi, ideal günlük hedef olan 200 dakikayı (8 pomodoro × 25 dk) gösterir.</p>
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="productivity-insights">
-                                        <h3>Verimlilik Analizi</h3>
-
-                                        <div className="insight-card">
-                                            <div className="insight-icon">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <circle cx="12" cy="12" r="10"></circle>
-                                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                                </svg>
+                                    <div className="trend-card">
+                                        <div className="trend-header">
+                                            <h3>Haftalık Hedef İlerleme</h3>
+                                        </div>
+                                        <div className="goal-progress">
+                                            <div className="goal-details">
+                                                <div className="goal-info">
+                                                    <span className="goal-label">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <circle cx="12" cy="12" r="10"></circle>
+                                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                                        </svg>
+                                                        Haftalık Hedef
+                                                    </span>
+                                                    <span className="goal-value">
+                                                        1400 dk
+                                                        <small>(56 pomodoro)</small>
+                                                    </span>
+                                                </div>
+                                                <div className="goal-info">
+                                                    <span className="goal-label">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                                        </svg>
+                                                        Tamamlanan
+                                                    </span>
+                                                    <span className="goal-value">
+                                                        {weeklyStats.reduce((sum, day) => sum + day.dakika, 0)} dk
+                                                        <small>({Math.round(weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 25)} pomodoro)</small>
+                                                    </span>
+                                                </div>
+                                                <div className="goal-info">
+                                                    <span className="goal-label">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                                            <polyline points="17 6 23 6 23 12"></polyline>
+                                                        </svg>
+                                                        Kalan
+                                                    </span>
+                                                    <span className="goal-value">
+                                                        {Math.max(0, 1400 - weeklyStats.reduce((sum, day) => sum + day.dakika, 0))} dk
+                                                        <small>({Math.round(Math.max(0, 1400 - weeklyStats.reduce((sum, day) => sum + day.dakika, 0)) / 25)} pomodoro)</small>
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="insight-content">
-                                                <h4>Optimal Çalışma Saatleri</h4>
-                                                <p>Son 7 gündeki verilerinize göre, öğleden sonra 14:00-16:00 arası en verimli çalışma saatleriniz. Bu saatlerde daha zorlu görevlerinizi planlamayı düşünebilirsiniz.</p>
+                                            <div className="goal-progress-bar">
+                                                <div
+                                                    className="goal-progress-fill"
+                                                    style={{
+                                                        width: `${Math.min(100, (weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 1400) * 100)}%`
+                                                    }}
+                                                />
+                                                <div className="goal-progress-text">
+                                                    {Math.round((weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 1400) * 100)}%
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div className="insight-card">
-                                            <div className="insight-icon">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                                </svg>
-                                            </div>
-                                            <div className="insight-content">
-                                                <h4>En Verimli Gününüz</h4>
-                                                <p>{mostProductiveDay.day} günleri ortalama {mostProductiveDay.averagePomodoros} pomodoro tamamlıyorsunuz. Bu gün için önemli görevlerinizi planlamayı düşünebilirsiniz.</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="insight-card">
-                                            <div className="insight-icon">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <div className="trend-insight">
+                                            <div className="trend-insight-header">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                     <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
                                                     <polyline points="17 6 23 6 23 12"></polyline>
                                                 </svg>
-                                            </div>
-                                            <div className="insight-content">
                                                 <h4>İlerleme Trendi</h4>
-                                                <p>Son 2 haftada pomodoro tamamlama sayınız {calculateTrend.isPositive ? 'artıyor' : 'azalıyor'}.
+                                            </div>
+                                            <div className="trend-insight-content">
+                                                <p>
+                                                    Son 2 haftada pomodoro tamamlama sayınız {calculateTrend.isPositive ? 'artıyor' : 'azalıyor'}.
                                                     {calculateTrend.isPositive
                                                         ? ' Bu tempoyla devam ederseniz, hedeflerinize daha hızlı ulaşabilirsiniz.'
                                                         : ' Daha fazla pomodoro tamamlamak için molaları daha etkili kullanmayı deneyebilirsiniz.'}
                                                 </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="insight-card">
-                                            <div className="insight-icon">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                                                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                                                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                                                </svg>
-                                            </div>
-                                            <div className="insight-content">
-                                                <h4>Öneri: Haftalık Hedef</h4>
-                                                <p>Haftalık ortalama performansınıza göre, günlük {targetSuggestion} pomodoro tamamlamak size uygun bir hedef olabilir. Bu, mevcut kapasiteninizden biraz daha yüksek ancak ulaşılabilir bir hedeftir.</p>
                                             </div>
                                         </div>
                                     </div>

@@ -198,6 +198,10 @@ function Timer({ duration, isActive, onComplete, resetFlag, onModeChange }) {
     // Görsel formatı oluştur
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
+    const totalSeconds = mode === 'pomodoro' ? duration * 60 :
+        mode === 'shortBreak' ? SHORT_BREAK_DURATION * 60 :
+            LONG_BREAK_DURATION * 60;
+    const progress = ((totalSeconds - timeLeft) / totalSeconds) * 100;
 
     return (
         <div className="timer">
@@ -221,8 +225,14 @@ function Timer({ duration, isActive, onComplete, resetFlag, onModeChange }) {
                     Uzun Mola
                 </button>
             </div>
-            <div className="time-display">
-                {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+            <div className="timer-container">
+                <div
+                    className="timer-circle"
+                    style={{ '--progress': `${progress}%` }}
+                />
+                <div className="time-display">
+                    {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                </div>
             </div>
             <ConfirmModal
                 isOpen={showConfirmModal}

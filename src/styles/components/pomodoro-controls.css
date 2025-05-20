@@ -6,11 +6,11 @@
 }
 
 .pomodoro-controls button {
-    min-width: 100px;
-    padding: 12px 24px;
-    border-radius: var(--border-radius-md);
+    min-width: 120px;
+    padding: 14px 28px;
+    border-radius: var(--border-radius-lg);
     font-size: var(--font-size-md);
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-fast);
     display: inline-flex;
@@ -18,25 +18,52 @@
     justify-content: center;
     color: white;
     border: none;
-}
-
-.pomodoro-controls .start-btn {
-    background-color: var(--color-primary);
-}
-
-.pomodoro-controls .pause-btn {
-    background-color: var(--color-secondary);
-}
-
-.pomodoro-controls .reset-btn {
-    background-color: #95a5a6;
-}
-
-.pomodoro-controls button:hover {
-    filter: brightness(90%);
+    position: relative;
+    overflow: hidden;
     box-shadow: var(--shadow-sm);
 }
 
+.pomodoro-controls button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(-100%);
+    transition: transform var(--transition-fast);
+}
+
+.pomodoro-controls button:hover::before {
+    transform: translateX(0);
+}
+
+.pomodoro-controls .start-btn {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+}
+
+.pomodoro-controls .pause-btn {
+    background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark));
+}
+
+.pomodoro-controls .reset-btn {
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+}
+
+.pomodoro-controls button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
 .pomodoro-controls button:active {
-    transform: scale(0.98);
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.pomodoro-controls button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }

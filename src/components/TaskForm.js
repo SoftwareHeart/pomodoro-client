@@ -21,12 +21,9 @@ function TaskForm({ onAddTask }) {
         setTaskName('');
         setDuration(25);
         setCustomDuration(false);
-        // Başarılı ekleme sonrası formu kapat (opsiyonel)
-        // setIsFormOpen(false);
     };
 
-    const handleDurationChange = (e) => {
-        const value = e.target.value;
+    const handleDurationChange = (value) => {
         if (value === "custom") {
             setCustomDuration(true);
             setDuration(25);
@@ -42,9 +39,24 @@ function TaskForm({ onAddTask }) {
         setDuration(value);
     };
 
+    const incrementDuration = () => {
+        setDuration(prev => Math.min(prev + 1, 120));
+    };
+
+    const decrementDuration = () => {
+        setDuration(prev => Math.max(prev - 1, 1));
+    };
+
     const toggleForm = () => {
         setIsFormOpen(!isFormOpen);
     };
+
+    const durationPresets = [
+        { value: 25, label: "25 dk", description: "Standart Pomodoro" },
+        { value: 15, label: "15 dk", description: "Kısa Görev" },
+        { value: 45, label: "45 dk", description: "Uzun Görev" },
+        { value: "custom", label: "Özel", description: "Özel süre belirle" }
+    ];
 
     return (
         <div className="task-form-container">
@@ -68,7 +80,7 @@ function TaskForm({ onAddTask }) {
                         </button>
                     </div>
 
-                    <form className="task-form" onSubmit={handleSubmit}>
+                    <form onSubmit={handleSubmit}>
                         <div className="form-group">
                             <label htmlFor="taskName">Görev Adı:</label>
                             <input
@@ -83,35 +95,87 @@ function TaskForm({ onAddTask }) {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="duration">Süre (dakika):</label>
-                            {!customDuration ? (
-                                <select
-                                    id="duration"
-                                    value={duration}
-                                    onChange={handleDurationChange}
-                                >
-                                    <option value={25}>25 (Standart)</option>
-                                    <option value={15}>15 (Kısa)</option>
-                                    <option value={45}>45 (Uzun)</option>
-                                    <option value="custom">Özel Süre...</option>
-                                </select>
-                            ) : (
-                                <div className="custom-duration-container">
-                                    <input
-                                        type="number"
-                                        id="customDuration"
-                                        value={duration}
-                                        onChange={handleCustomDurationChange}
-                                        min="1"
-                                        max="120"
-                                    />
+                            <label>Süre Seçimi:</label>
+                            <div className="duration-presets">
+                                {durationPresets.map((preset) => (
                                     <button
+                                        key={preset.value}
                                         type="button"
-                                        className="back-to-select-btn"
-                                        onClick={() => setCustomDuration(false)}
+                                        className={`duration-preset ${duration === preset.value ? 'active' : ''} ${customDuration && preset.value === 'custom' ? 'active' : ''}`}
+                                        onClick={() => handleDurationChange(preset.value)}
                                     >
-                                        ↩
+                                        <span className="duration-label">{preset.label}</span>
+                                        <span className="duration-description">{preset.description}</span>
                                     </button>
+                                ))}
+                            </div>
+
+                            {customDuration && (
+                                <div className="custom-duration-container">
+                                    <div className="custom-duration-header">
+                                        <h4>Özel Süre Belirle</h4>
+                                        <button
+                                            type="button"
+                                            className="back-to-select-btn"
+                                            onClick={() => setCustomDuration(false)}
+                                            title="Geri Dön"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M19 12H5M12 19l-7-7 7-7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div className="custom-duration-input">
+                                        <button
+                                            type="button"
+                                            className="duration-control-btn"
+                                            onClick={decrementDuration}
+                                            disabled={duration <= 1}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                        </button>
+                                        <div className="duration-display">
+                                            <input
+                                                type="number"
+                                                id="customDuration"
+                                                value={duration}
+                                                onChange={handleCustomDurationChange}
+                                                min="1"
+                                                max="120"
+                                            />
+                                            <span className="duration-unit">dakika</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="duration-control-btn"
+                                            onClick={incrementDuration}
+                                            disabled={duration >= 120}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div className="duration-slider">
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max="120"
+                                            value={duration}
+                                            onChange={(e) => setDuration(Number(e.target.value))}
+                                            className="duration-range"
+                                        />
+                                        <div className="duration-marks">
+                                            <span>1 dk</span>
+                                            <span>30 dk</span>
+                                            <span>60 dk</span>
+                                            <span>90 dk</span>
+                                            <span>120 dk</span>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>

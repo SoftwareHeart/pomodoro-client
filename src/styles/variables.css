@@ -67,4 +67,12 @@
     --z-index-dropdown: 100;
     --z-index-modal: 1000;
     --z-index-notification: 2000;
+
+    /* Gradient Colors */
+    --color-primary-dark: #2563eb;
+    --color-secondary-dark: #dc2626;
+    --color-accent-dark: #059669;
+
+    /* Shadows */
+    --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
