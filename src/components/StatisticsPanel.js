@@ -47,71 +47,6 @@ function StatisticsPanel() {
         return currentUser ? currentUser.id : "defaultUser";
     }, [currentUser]);
 
-    const fetchAllStats = useCallback(async () => {
-        // If not authenticated, don't fetch stats
-        if (!isAuthenticated()) {
-            setLoading(false);
-            return;
-        }
-
-        try {
-            setLoading(true);
-
-            // Tüm verileri paralel olarak çekelim
-            const [generalStats, weeklyData] = await Promise.all([
-                statsService.getStatistics(userId),
-                statsService.getWeeklyStats(userId),
-            ]);
-
-            setStats(generalStats);
-            setWeeklyStats(weeklyData);
-
-            // Yeni kullanıcı kontrolü
-            if (generalStats.totalCompletedSessions === 0 &&
-                (!tasks || tasks.length === 0)) {
-                setIsNewUser(true);
-            } else {
-                setIsNewUser(false);
-            }
-
-            // Önceki gün verilerini bulalım
-            if (weeklyData && weeklyData.length > 1) {
-                const today = weeklyData[weeklyData.length - 1];
-                const yesterday = weeklyData[weeklyData.length - 2];
-
-                if (today && yesterday) {
-                    setPreviousDayStats({
-                        completedPomodoros: yesterday.tamamlanan,
-                        totalMinutes: yesterday.dakika
-                    });
-                }
-            }
-
-            setError(null);
-        } catch (error) {
-            console.error("İstatistikler yüklenirken hata oluştu:", error);
-            setError("İstatistikler yüklenirken bir hata oluştu.");
-        } finally {
-            setLoading(false);
-        }
-    }, [statsService, userId, tasks, isAuthenticated]);
-
-    useEffect(() => {
-        fetchAllStats();
-    }, [fetchAllStats]);
-
-    // If user is not authenticated, show login prompt
-    if (!isAuthenticated()) {
-        return (
-            <div className="statistics-panel modern">
-                <LoginPrompt
-                    message="İstatistiklerinizi Görüntüleyin"
-                    actionText="Pomodoro istatistiklerinizi takip etmek ve ilerlemenizi görmek için giriş yapın veya kayıt olun."
-                />
-            </div>
-        );
-    }
-
     // Trend hesaplama fonksiyonu - dakika bazında karşılaştırma
     const calculateTrend = useMemo(() => {
         if (!stats || !previousDayStats || previousDayStats.totalMinutes === 0) {
@@ -279,6 +214,80 @@ function StatisticsPanel() {
         chartData.find(day => day.name === dayName) || { name: dayName, tamamlanan: 0, dakika: 0 }
     );
 
+    const fetchAllStats = useCallback(async () => {
+        // If not authenticated, don't fetch stats
+        if (!isAuthenticated()) {
+            setLoading(false);
+            return;
+        }
+
+        // Check if there are any completed tasks
+        const hasCompletedTasks = tasks && tasks.some(task => task.isCompleted);
+        if (!hasCompletedTasks) {
+            setLoading(false);
+            setStats(null);
+            setWeeklyStats([]);
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            // Tüm verileri paralel olarak çekelim
+            const [generalStats, weeklyData] = await Promise.all([
+                statsService.getStatistics(userId),
+                statsService.getWeeklyStats(userId),
+            ]);
+
+            setStats(generalStats);
+            setWeeklyStats(weeklyData);
+
+            // Yeni kullanıcı kontrolü
+            if (generalStats.totalCompletedSessions === 0 &&
+                (!tasks || tasks.length === 0)) {
+                setIsNewUser(true);
+            } else {
+                setIsNewUser(false);
+            }
+
+            // Önceki gün verilerini bulalım
+            if (weeklyData && weeklyData.length > 1) {
+                const today = weeklyData[weeklyData.length - 1];
+                const yesterday = weeklyData[weeklyData.length - 2];
+
+                if (today && yesterday) {
+                    setPreviousDayStats({
+                        completedPomodoros: yesterday.tamamlanan,
+                        totalMinutes: yesterday.dakika
+                    });
+                }
+            }
+
+            setError(null);
+        } catch (error) {
+            console.error("İstatistikler yüklenirken hata oluştu:", error);
+            setError("İstatistikler yüklenirken bir hata oluştu.");
+        } finally {
+            setLoading(false);
+        }
+    }, [statsService, userId, tasks, isAuthenticated]);
+
+    useEffect(() => {
+        fetchAllStats();
+    }, [fetchAllStats]);
+
+    // If user is not authenticated, show login prompt
+    if (!isAuthenticated()) {
+        return (
+            <div className="statistics-panel modern">
+                <LoginPrompt
+                    message="İstatistiklerinizi Görüntüleyin"
+                    actionText="Pomodoro istatistiklerinizi takip etmek ve ilerlemenizi görmek için giriş yapın veya kayıt olun."
+                />
+            </div>
+        );
+    }
+
     if (loading) return (
         <div className="statistics-panel loading">
             <div className="loader"></div>
@@ -294,10 +303,9 @@ function StatisticsPanel() {
         </div>
     );
 
-    if (!stats) return null;
-
-    // Yeni kullanıcı karşılama ekranı
-    if (isNewUser) {
+    // Check if there are any completed tasks
+    const hasCompletedTasks = tasks && tasks.some(task => task.isCompleted);
+    if (!hasCompletedTasks) {
         return (
             <div className="statistics-panel modern new-user">
                 <div className="welcome-container">
@@ -308,33 +316,14 @@ function StatisticsPanel() {
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
                     </div>
-                    <h2>Merhaba! Pomodoro'ya Hoş Geldiniz</h2>
-                    <p>Henüz istatistik görüntülenecek bir veri bulunmuyor. İstatistikleri görmek için ilk pomodoro görevinizi oluşturun ve tamamlayın.</p>
-
-                    <div className="getting-started">
-                        <h3>Başlamak için:</h3>
-                        <ol>
-                            <li>Sol tarafta "Yeni Görev Ekle" butonuna tıklayın</li>
-                            <li>Görev adı ve süre belirleyin</li>
-                            <li>Görevi seçin ve başlatın</li>
-                            <li>Tamamlandığında istatistikleriniz otomatik olarak güncellenecektir</li>
-                        </ol>
-                    </div>
-
-                    <div className="welcome-tips">
-                        <h3>Pomodoro Tekniği İpuçları:</h3>
-                        <ul>
-                            <li>25 dakikalık pomodoro süreleri kullanın</li>
-                            <li>Her pomodoro arasında 5 dakika mola verin</li>
-                            <li>4 pomodoro sonrasında daha uzun bir mola (15-30 dk) verin</li>
-                            <li>Günlük hedef olarak 8 pomodoro tamamlamayı hedefleyin</li>
-                            <li>Molalar sırasında zihinsel olarak dinlenin</li>
-                        </ul>
-                    </div>
+                    <h2>İstatistikler İçin Görev Tamamlayın</h2>
+                    <p>İstatistikleri görmek için en az bir görevi tamamlamanız gerekiyor. Görevlerinizi tamamladıktan sonra burada detaylı istatistiklerinizi görebileceksiniz.</p>
                 </div>
             </div>
         );
     }
+
+    if (!stats) return null;
 
     // 1. Verimlilik hesaplama mantığını düzeltme
     const calculateEfficiency = () => {

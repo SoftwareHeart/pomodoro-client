@@ -7,12 +7,6 @@
     justify-content: center;
     text-align: center;
     padding: var(--spacing-xl);
-    background-color: var(--color-panel);
-    border-radius: var(--border-radius-lg);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-md);
-    margin: var(--spacing-md) 0;
-    animation: fadeIn var(--transition-normal) ease;
     height: 100%;
     min-height: 250px;
 }
@@ -53,17 +47,44 @@
 
 .login-btn,
 .register-btn {
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border-radius: var(--border-radius-md);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
     font-weight: 500;
     transition: all var(--transition-normal);
     text-decoration: none;
+    font-size: var(--font-size-md);
 }
 
 .login-btn {
     background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
     color: white;
     box-shadow: var(--shadow-sm);
+    border-radius: var(--border-radius-md);
+    min-width: 120px;
+    min-height: 44px;
+    padding: 0 var(--spacing-xl);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    transition: all var(--transition-normal);
+}
+
+.login-btn:active {
+    filter: brightness(0.95);
+}
+
+.login-btn svg {
+    margin-right: 6px;
 }
 
 .register-btn {
@@ -78,6 +99,47 @@
     box-shadow: var(--shadow-md);
 }
 
+.login-btn svg,
+.register-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.login-prompt-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-foreground);
+    opacity: 0.8;
+    font-size: var(--font-size-sm);
+}
+
+.feature-item svg {
+    color: var(--color-primary);
+    opacity: 0.9;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mini login prompt styles */
 .login-prompt-mini {
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--border-radius-lg);
@@ -163,8 +225,9 @@
     border-radius: var(--border-radius-xl);
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-lg);
-    padding: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    width: 100%;
+    max-width: 500px;
     animation: fadeIn var(--transition-normal) ease;
 }
 
@@ -172,34 +235,39 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
 }
 
 .login-prompt-card-icon {
     background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
     color: white;
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     border-radius: var(--border-radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: var(--shadow-md);
 }
 
 .login-prompt-card-title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-xl);
     font-weight: 600;
     color: var(--color-foreground);
     margin: 0;
+    text-align: left;
 }
 
 .login-prompt-card-content {
     color: var(--color-foreground);
     opacity: 0.8;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    font-size: var(--font-size-md);
+    line-height: 1.6;
 }
 
 .login-prompt-card-actions {
     display: flex;
     gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
 }
