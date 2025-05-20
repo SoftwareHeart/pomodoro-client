@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import apiService from '../services/api';
+// src/contexts/TasksContext.js
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import apiService, { createAuthApiService } from '../services/api';
+import { useAuth } from './AuthContext';
 
 const TasksContext = createContext();
 
@@ -8,10 +10,24 @@ export function TasksProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const { getAuthHeader, currentUser } = useAuth();
+
+    // Kimlik doğrulama ile API servisi (memoized değer)
+    const authApiService = useMemo(() => {
+        return createAuthApiService(getAuthHeader);
+    }, [getAuthHeader]);
+
+    // Görevleri getir
     const fetchTasks = useCallback(async () => {
+        if (!currentUser) {
+            setTasks([]);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
-            const sessions = await apiService.getSessions();
+            const sessions = await authApiService.getSessions();
             setTasks(sessions);
             setError(null);
         } catch (error) {
@@ -20,11 +36,18 @@ export function TasksProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [currentUser, authApiService]);
 
+    // Görev ekle
     const addTask = useCallback(async (newTask) => {
         try {
-            const addedTask = await apiService.createSession(newTask);
+            // Eğer kullanıcı giriş yapmışsa, kendi ID'sini kullan
+            const taskToAdd = { ...newTask };
+            if (currentUser) {
+                taskToAdd.userId = currentUser.id;
+            }
+
+            const addedTask = await authApiService.createSession(taskToAdd);
             setTasks(prev => [...prev, addedTask]);
             return addedTask;
         } catch (error) {
@@ -32,32 +55,50 @@ export function TasksProvider({ children }) {
             setError("Görev eklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
             throw error;
         }
-    }, []);
+    }, [authApiService, currentUser]);
 
+    // Görev sil
     const deleteTask = useCallback(async (taskId) => {
         try {
-            await apiService.deleteSession(taskId);
+            await authApiService.deleteSession(taskId);
             setTasks(prev => prev.filter(task => task.id !== taskId));
-            await fetchTasks(); // İstatistikleri güncelle
+
+            // İstatistikleri güncelle
+            // fetchTasks'ı doğrudan çağırmak döngüye neden olabilir
+            // Bu nedenle deleteTask başarılı olduktan sonra otomatik yenileme olmasını istiyorsak
+            // bir bayrağı güncellemeyi düşünebiliriz
+            // Şimdilik bu kısmı kaldırıyoruz:
+            // await fetchTasks();
         } catch (error) {
             console.error("Görev silinirken hata oluştu:", error);
             setError("Görev silinirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
             throw error;
         }
-    }, [fetchTasks]);
+    }, [authApiService]);
 
+    // Görev tamamla
     const completeTask = useCallback(async (taskId) => {
         try {
-            await apiService.completeSession(taskId);
-            await fetchTasks(); // İstatistikleri güncelle
+            await authApiService.completeSession(taskId);
+
+            // Tamamlanan görevi doğrudan güncelleyelim
+            setTasks(prev => prev.map(task =>
+                task.id === taskId
+                    ? { ...task, isCompleted: true, endTime: new Date().toISOString() }
+                    : task
+            ));
+
+            // İstatistikleri güncellemek için fetchTasks yerine,
+            // kullanıcı istatistikleri ekranına geçtiğinde yenileme yapılabilir
         } catch (error) {
             console.error("Görev tamamlanırken hata oluştu:", error);
             setError("Görev tamamlanırken bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
             throw error;
         }
-    }, [fetchTasks]);
+    }, [authApiService]);
 
-    const value = {
+    // Context için sağlanacak değerler
+    const value = useMemo(() => ({
         tasks,
         loading,
         error,
@@ -65,7 +106,7 @@ export function TasksProvider({ children }) {
         addTask,
         deleteTask,
         completeTask
-    };
+    }), [tasks, loading, error, fetchTasks, addTask, deleteTask, completeTask]);
 
     return (
         <TasksContext.Provider value={value}>
@@ -80,4 +121,4 @@ export function useTasks() {
         throw new Error('useTasks must be used within a TasksProvider');
     }
     return context;
-} 
+}

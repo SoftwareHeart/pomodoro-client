@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import apiService from '../services/api';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import apiService, { createAuthApiService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import {
     LineChart,
     Line,
@@ -35,53 +36,60 @@ function StatisticsPanel() {
     const [previousDayStats, setPreviousDayStats] = useState(null);
     const [isNewUser, setIsNewUser] = useState(false);
     const { tasks } = useTasks();
+    const { currentUser, getAuthHeader } = useAuth();
+    const statsService = useMemo(() => {
+        return currentUser ? createAuthApiService(getAuthHeader) : apiService;
+    }, [currentUser, getAuthHeader]);
 
-    useEffect(() => {
-        const fetchAllStats = async () => {
-            try {
-                setLoading(true);
+    // userId'yi de bir memorized değer olarak tanımla
+    const userId = useMemo(() => {
+        return currentUser ? currentUser.id : "defaultUser";
+    }, [currentUser]);
+    const fetchAllStats = useCallback(async () => {
+        try {
+            setLoading(true);
 
-                // Tüm verileri paralel olarak çekelim
-                const [generalStats, weeklyData] = await Promise.all([
-                    apiService.getStatistics(),
-                    apiService.getWeeklyStats(),
-                ]);
+            // Tüm verileri paralel olarak çekelim
+            const [generalStats, weeklyData] = await Promise.all([
+                statsService.getStatistics(userId),
+                statsService.getWeeklyStats(userId),
+            ]);
 
-                setStats(generalStats);
-                setWeeklyStats(weeklyData);
+            setStats(generalStats);
+            setWeeklyStats(weeklyData);
 
-                // Yeni kullanıcı kontrolü
-                if (generalStats.totalCompletedSessions === 0 &&
-                    (!tasks || tasks.length === 0)) {
-                    setIsNewUser(true);
-                } else {
-                    setIsNewUser(false);
-                }
-
-                // Önceki gün verilerini bulalım
-                if (weeklyData && weeklyData.length > 1) {
-                    const today = weeklyData[weeklyData.length - 1];
-                    const yesterday = weeklyData[weeklyData.length - 2];
-
-                    if (today && yesterday) {
-                        setPreviousDayStats({
-                            completedPomodoros: yesterday.tamamlanan,
-                            totalMinutes: yesterday.dakika
-                        });
-                    }
-                }
-
-                setError(null);
-            } catch (error) {
-                console.error("İstatistikler yüklenirken hata oluştu:", error);
-                setError("İstatistikler yüklenirken bir hata oluştu.");
-            } finally {
-                setLoading(false);
+            // Yeni kullanıcı kontrolü
+            if (generalStats.totalCompletedSessions === 0 &&
+                (!tasks || tasks.length === 0)) {
+                setIsNewUser(true);
+            } else {
+                setIsNewUser(false);
             }
-        };
 
+            // Önceki gün verilerini bulalım
+            if (weeklyData && weeklyData.length > 1) {
+                const today = weeklyData[weeklyData.length - 1];
+                const yesterday = weeklyData[weeklyData.length - 2];
+
+                if (today && yesterday) {
+                    setPreviousDayStats({
+                        completedPomodoros: yesterday.tamamlanan,
+                        totalMinutes: yesterday.dakika
+                    });
+                }
+            }
+
+            setError(null);
+        } catch (error) {
+            console.error("İstatistikler yüklenirken hata oluştu:", error);
+            setError("İstatistikler yüklenirken bir hata oluştu.");
+        } finally {
+            setLoading(false);
+        }
+    }, [statsService, userId, tasks]);
+    useEffect(() => {
         fetchAllStats();
-    }, [tasks]); // tasks değiştiğinde istatistikleri güncelle
+    }, [fetchAllStats]);
 
     // Trend hesaplama fonksiyonu - dakika bazında karşılaştırma
     const calculateTrend = useMemo(() => {
@@ -89,12 +97,11 @@ function StatisticsPanel() {
             return { percentage: 0, isPositive: true };
         }
 
-        // Bugünün toplam dakikası ile dünün karşılaştırması
         const difference = stats.minutesToday - previousDayStats.totalMinutes;
         const percentage = Math.round((difference / previousDayStats.totalMinutes) * 100);
 
         return {
-            percentage: Math.abs(percentage), // Mutlak değer alıyoruz, işareti ayrı tutuyoruz
+            percentage: Math.abs(percentage),
             isPositive: percentage >= 0
         };
     }, [stats, previousDayStats]);

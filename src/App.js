@@ -1,4 +1,6 @@
+// src/App.js
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import Timer from './components/Timer';
 import PomodoroControls from './components/PomodoroControls';
@@ -8,23 +10,45 @@ import StatisticsPanel from './components/StatisticsPanel';
 import ThemeSelector from './components/ThemeSelector';
 import NotificationSettings from './components/NotificationSettings';
 import NotificationsContainer from './components/NotificationsContainer';
+import Login from './components/Login';
+import Register from './components/Register';
+import Profile from './components/Profile';
+import ProtectedRoute from './components/ProtectedRoute';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { NotificationProvider } from './contexts/NotificationContext';
-import { TasksProvider } from './contexts/TasksContext';
-import { useNotification } from './contexts/NotificationContext';
-import { useTasks } from './contexts/TasksContext';
-import apiService from './services/api';
+import { NotificationProvider, useNotification } from './contexts/NotificationContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { TasksProvider, useTasks } from './contexts/TasksContext';
+import Header from './components/Header';
 
 // Ana uygulama bileşeni - Provider'ları burada oluşturuyoruz
 function App() {
   return (
-    <ThemeProvider>
-      <NotificationProvider>
-        <TasksProvider>
-          <AppContent />
-        </TasksProvider>
-      </NotificationProvider>
-    </ThemeProvider>
+    <Router>
+      <ThemeProvider>
+        <NotificationProvider>
+          <AuthProvider>
+            <TasksProvider>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <AppContent />
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+              <NotificationsContainer />
+            </TasksProvider>
+          </AuthProvider>
+        </NotificationProvider>
+      </ThemeProvider>
+    </Router>
   );
 }
 
@@ -36,12 +60,15 @@ function AppContent() {
   const [currentSession, setCurrentSession] = useState(null);
   const [resetFlag, setResetFlag] = useState(0);
   const { showVisualNotification } = useNotification();
+  const { currentUser } = useAuth();
   const { tasks, loading, error: tasksError, fetchTasks, addTask, deleteTask, completeTask } = useTasks();
 
-  // Sayfa yüklendiğinde görevleri getir
+  // Sayfa yüklendiğinde ve kullanıcı değiştiğinde görevleri getir
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    if (currentUser) {
+      fetchTasks();
+    }
+  }, [fetchTasks, currentUser]);
 
   // Yeni görev ekleme
   const handleAddTask = async (newTask) => {
@@ -159,15 +186,7 @@ function AppContent() {
 
   return (
     <div className="app">
-      <div className="app-header-container">
-        <header>
-          <h1>Pomodoro Zamanlayıcı</h1>
-        </header>
-        <div className="app-controls">
-          <NotificationSettings />
-          <ThemeSelector />
-        </div>
-      </div>
+      <Header />
 
       {tasksError && (
         <div className="error-message">
@@ -221,8 +240,6 @@ function AppContent() {
           </div>
         </div>
       </main>
-
-      <NotificationsContainer />
     </div>
   );
 }

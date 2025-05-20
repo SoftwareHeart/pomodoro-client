@@ -1,0 +1,252 @@
+/* src/styles/components/auth.css */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: var(--spacing-lg);
+    background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.05), rgba(var(--color-secondary-rgb), 0.05));
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 450px;
+    padding: var(--spacing-xl);
+    background: var(--color-panel);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-border);
+    animation: fadeIn var(--transition-normal) ease;
+}
+
+.auth-card h2 {
+    margin-bottom: var(--spacing-xl);
+    color: var(--color-primary);
+    text-align: center;
+    font-size: var(--font-size-xxl);
+    font-weight: 600;
+}
+
+.auth-error {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    background-color: rgba(var(--color-error-rgb), 0.1);
+    border-left: 4px solid var(--color-error);
+    border-radius: var(--border-radius-md);
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.auth-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.auth-form label {
+    font-weight: 600;
+    color: var(--color-foreground);
+    font-size: var(--font-size-sm);
+}
+
+.auth-form input {
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    font-size: var(--font-size-md);
+    background-color: var(--color-panel);
+    color: var(--color-foreground);
+    transition: all var(--transition-normal);
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+    transform: translateY(-1px);
+}
+
+.auth-form small {
+    color: var(--color-foreground);
+    opacity: 0.7;
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-xs);
+}
+
+.auth-submit-btn {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+}
+
+.auth-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.auth-submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.auth-links {
+    margin-top: var(--spacing-xl);
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--color-foreground);
+    opacity: 0.8;
+}
+
+.auth-links a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+    opacity: 0.9;
+}
+
+/* Profile stilleri */
+.profile-container {
+    padding: var(--spacing-lg);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.profile-card {
+    width: 100%;
+    max-width: 600px;
+    background: var(--color-panel);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-xl);
+    border: 1px solid var(--color-border);
+}
+
+.profile-card h2 {
+    margin-bottom: var(--spacing-xl);
+    color: var(--color-primary);
+    font-size: var(--font-size-xxl);
+    font-weight: 600;
+    text-align: center;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 600;
+    box-shadow: var(--shadow-md);
+}
+
+.profile-details {
+    flex: 1;
+}
+
+.profile-item {
+    margin-bottom: var(--spacing-md);
+}
+
+.profile-label {
+    display: block;
+    font-size: var(--font-size-sm);
+    color: var(--color-foreground);
+    opacity: 0.7;
+    margin-bottom: var(--spacing-xs);
+}
+
+.profile-value {
+    font-size: var(--font-size-lg);
+    color: var(--color-foreground);
+    font-weight: 500;
+}
+
+.profile-actions {
+    margin-top: var(--spacing-xl);
+    display: flex;
+    justify-content: center;
+}
+
+.profile-logout-btn {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-logout-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Header içindeki profil butonu stilleri */
+.user-profile-link {
+    margin-right: var(--spacing-md);
+}
+
+.profile-button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-panel);
+    color: var(--color-foreground);
+    border-radius: var(--border-radius-lg);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.profile-avatar-mini {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+}
