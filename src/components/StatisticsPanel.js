@@ -14,19 +14,27 @@ import {
     BarChart,
     Bar,
     Legend,
-    ReferenceLine
+    ReferenceLine,
+    Area,
+    RadarChart,
+    PolarGrid,
+    PolarAngleAxis,
+    PolarRadiusAxis,
+    Radar,
+    AreaChart
 } from 'recharts';
+import { useTasks } from '../contexts/TasksContext';
 
 function StatisticsPanel() {
     const [stats, setStats] = useState(null);
     const [weeklyStats, setWeeklyStats] = useState([]);
-    const [allTasks, setAllTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [timeRange, setTimeRange] = useState('week');
     const [activeTab, setActiveTab] = useState('overview');
     const [previousDayStats, setPreviousDayStats] = useState(null);
     const [isNewUser, setIsNewUser] = useState(false);
+    const { tasks } = useTasks();
 
     useEffect(() => {
         const fetchAllStats = async () => {
@@ -34,19 +42,17 @@ function StatisticsPanel() {
                 setLoading(true);
 
                 // Tüm verileri paralel olarak çekelim
-                const [generalStats, weeklyData, tasksData] = await Promise.all([
+                const [generalStats, weeklyData] = await Promise.all([
                     apiService.getStatistics(),
                     apiService.getWeeklyStats(),
-                    apiService.getSessions(), // Tüm görevleri çek
                 ]);
 
                 setStats(generalStats);
                 setWeeklyStats(weeklyData);
-                setAllTasks(tasksData);
 
                 // Yeni kullanıcı kontrolü
                 if (generalStats.totalCompletedSessions === 0 &&
-                    (!tasksData || tasksData.length === 0)) {
+                    (!tasks || tasks.length === 0)) {
                     setIsNewUser(true);
                 } else {
                     setIsNewUser(false);
@@ -54,7 +60,6 @@ function StatisticsPanel() {
 
                 // Önceki gün verilerini bulalım
                 if (weeklyData && weeklyData.length > 1) {
-                    // weeklyData son 7 günü içerdiğinden, bugün verisi son eleman, dün verisi sondan bir önceki olmalı
                     const today = weeklyData[weeklyData.length - 1];
                     const yesterday = weeklyData[weeklyData.length - 2];
 
@@ -70,39 +75,13 @@ function StatisticsPanel() {
             } catch (error) {
                 console.error("İstatistikler yüklenirken hata oluştu:", error);
                 setError("İstatistikler yüklenirken bir hata oluştu.");
-
-                // Örnek veriler
-                const sampleData = [
-                    { name: 'Pzt', tamamlanan: 4, dakika: 100 },
-                    { name: 'Sal', tamamlanan: 3, dakika: 75 },
-                    { name: 'Çar', tamamlanan: 5, dakika: 125 },
-                    { name: 'Per', tamamlanan: 2, dakika: 50 },
-                    { name: 'Cum', tamamlanan: 6, dakika: 150 },
-                    { name: 'Cmt', tamamlanan: 3, dakika: 75 },
-                    { name: 'Paz', tamamlanan: 4, dakika: 100 },
-                ];
-
-                setWeeklyStats(sampleData);
-
-                // Örnek önceki gün verisi de belirleyelim
-                const today = sampleData[sampleData.length - 1];
-                const yesterday = sampleData[sampleData.length - 2];
-
-                if (today && yesterday) {
-                    setPreviousDayStats({
-                        completedPomodoros: yesterday.tamamlanan,
-                        totalMinutes: yesterday.dakika
-                    });
-                }
             } finally {
                 setLoading(false);
             }
         };
 
         fetchAllStats();
-        const interval = setInterval(fetchAllStats, 5 * 60 * 1000);
-        return () => clearInterval(interval);
-    }, []);
+    }, [tasks]); // tasks değiştiğinde istatistikleri güncelle
 
     // Trend hesaplama fonksiyonu - dakika bazında karşılaştırma
     const calculateTrend = useMemo(() => {
@@ -154,7 +133,7 @@ function StatisticsPanel() {
 
     // En uzun ve en kısa süreli görevleri bulma
     const taskDurationStats = useMemo(() => {
-        if (!allTasks || allTasks.length === 0 || isNewUser) {
+        if (!tasks || tasks.length === 0 || isNewUser) {
             return {
                 shortestTask: { name: '-', duration: 0 },
                 longestTask: { name: '-', duration: 0 },
@@ -163,7 +142,7 @@ function StatisticsPanel() {
         }
 
         // Sadece tamamlanmış görevleri al
-        const completedTasks = allTasks.filter(task => task.isCompleted);
+        const completedTasks = tasks.filter(task => task.isCompleted);
 
         if (completedTasks.length === 0) {
             return {
@@ -195,16 +174,16 @@ function StatisticsPanel() {
             longestTask: { name: longestTask.taskName, duration: longestTask.duration },
             averageDuration
         };
-    }, [allTasks, isNewUser]);
+    }, [tasks, isNewUser]);
 
     // Görev adı patternlerini analiz etme
     const taskPatterns = useMemo(() => {
-        if (!allTasks || allTasks.length < 5 || isNewUser) {
+        if (!tasks || tasks.length < 5 || isNewUser) {
             return { mostFrequent: 'Henüz yeterli veri yok' };
         }
 
         // Görev adlarından anahtar kelimeleri çıkar
-        const taskNameWords = allTasks
+        const taskNameWords = tasks
             .map(task => task.taskName.toLowerCase().split(/\s+/))
             .flat()
             .filter(word => word.length > 3); // 3 harften uzun kelimeleri al
@@ -232,7 +211,7 @@ function StatisticsPanel() {
         }
 
         return { mostFrequent: mostFrequentWord };
-    }, [allTasks, isNewUser]);
+    }, [tasks, isNewUser]);
 
     // Gelecek hedef önerisi
     const targetSuggestion = useMemo(() => {
@@ -264,6 +243,13 @@ function StatisticsPanel() {
     }, [weeklyStats, isNewUser]);
 
     const COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
+
+    // Haftanın günleri sabit dizi
+    const weekDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+    // chartData'yı haftanın günlerine göre sırala ve eksik günler için 0 tamamlanan ve 0 dakika koy
+    const weekChartData = weekDays.map(dayName =>
+        chartData.find(day => day.name === dayName) || { name: dayName, tamamlanan: 0, dakika: 0 }
+    );
 
     if (loading) return (
         <div className="statistics-panel loading">
@@ -562,227 +548,62 @@ function StatisticsPanel() {
                     {activeTab === 'charts' && (
                         <>
                             {chartData.length > 0 ? (
-                                <div className="statistics-charts">
-                                    <div className="chart-container">
-                                        <div className="chart-header">
-                                            <div className="chart-title">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                                                    <line x1="12" y1="20" x2="12" y2="4"></line>
-                                                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                                                </svg>
-                                                <h3>Haftalık Aktivite</h3>
-                                            </div>
-                                            <div className="chart-legend">
-                                                <div className="legend-item">
-                                                    <div className="legend-color" style={{ backgroundColor: COLORS[0] }}></div>
-                                                    <span>Tamamlanan Pomodoro</span>
-                                                </div>
-                                                <div className="legend-item">
-                                                    <div className="legend-color" style={{ backgroundColor: COLORS[1] }}></div>
-                                                    <span>Çalışma Süresi</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="chart-wrapper">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                                                    <XAxis
-                                                        dataKey="name"
-                                                        axisLine={false}
-                                                        tickLine={false}
-                                                        tick={{ fill: 'var(--color-foreground)', opacity: 0.8 }}
-                                                    />
-                                                    <YAxis
-                                                        axisLine={false}
-                                                        tickLine={false}
-                                                        tick={{ fill: 'var(--color-foreground)', opacity: 0.8 }}
-                                                    />
-                                                    <Tooltip
-                                                        content={({ active, payload, label }) => {
-                                                            if (active && payload && payload.length) {
-                                                                return (
-                                                                    <div className="chart-tooltip">
-                                                                        <div className="chart-tooltip-label">{label}</div>
-                                                                        {payload.map((entry, index) => (
-                                                                            <div key={index} className="chart-tooltip-value" style={{ color: entry.color }}>
-                                                                                {entry.name === 'tamamlanan'
-                                                                                    ? `${entry.value} pomodoro`
-                                                                                    : `${entry.value} dk`}
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                );
-                                                            }
-                                                            return null;
-                                                        }}
-                                                    />
-                                                    <Bar
-                                                        dataKey="tamamlanan"
-                                                        name="Tamamlanan"
-                                                        fill={COLORS[0]}
-                                                        radius={[4, 4, 0, 0]}
-                                                        maxBarSize={40}
-                                                    />
-                                                    <Bar
-                                                        dataKey="dakika"
-                                                        name="Dakika"
-                                                        fill={COLORS[1]}
-                                                        radius={[4, 4, 0, 0]}
-                                                        maxBarSize={40}
-                                                    />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                        <div className="chart-summary">
-                                            <div className="chart-stat-item">
-                                                <span className="chart-stat-label">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                                    </svg>
-                                                    Toplam Tamamlanan
-                                                </span>
-                                                <span className="chart-stat-value">
-                                                    {weeklyStats.reduce((sum, day) => sum + day.tamamlanan, 0)} pomodoro
-                                                </span>
-                                            </div>
-                                            <div className="chart-stat-item">
-                                                <span className="chart-stat-label">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <circle cx="12" cy="12" r="10"></circle>
-                                                        <polyline points="12 6 12 12 16 14"></polyline>
-                                                    </svg>
-                                                    Toplam Süre
-                                                </span>
-                                                <span className="chart-stat-value">
-                                                    {weeklyStats.reduce((sum, day) => sum + day.dakika, 0)} dk
-                                                </span>
-                                            </div>
-                                            <div className="chart-stat-item">
-                                                <span className="chart-stat-label">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                                                        <polyline points="17 6 23 6 23 12"></polyline>
-                                                    </svg>
-                                                    Günlük Ortalama
-                                                </span>
-                                                <span className="chart-stat-value">
-                                                    {Math.round(weeklyStats.reduce((sum, day) => sum + day.tamamlanan, 0) / weeklyStats.length)} pomodoro
-                                                </span>
-                                            </div>
-                                        </div>
+                                <div>
+                                    <div className="statistics-charts">
+                                        {/* Modern Area Chart */}
+                                        <ResponsiveContainer width="100%" height={260}>
+                                            <AreaChart data={weekChartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                                                <defs>
+                                                    <linearGradient id="colorPomodoro" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#40c463" stopOpacity={0.8} />
+                                                        <stop offset="95%" stopColor="#40c463" stopOpacity={0.1} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis dataKey="name" />
+                                                <YAxis allowDecimals={false} />
+                                                <Tooltip formatter={(value) => `${value} pomodoro`} />
+                                                <Area type="monotone" dataKey="tamamlanan" name="Tamamlanan Pomodoro" stroke="#40c463" fill="url(#colorPomodoro)" strokeWidth={3} dot={{ r: 6, fill: '#40c463', strokeWidth: 0 }} activeDot={{ r: 8, fill: '#40c463', stroke: 'white', strokeWidth: 2 }} />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
                                     </div>
-
-                                    <div className="chart-container">
-                                        <div className="chart-header">
-                                            <div className="chart-title">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <div className="chart-summary">
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                                </svg>
+                                                En Verimli Gün
+                                            </span>
+                                            <span className="chart-stat-value">
+                                                {weekChartData.reduce((max, day) => day.tamamlanan > max.tamamlanan ? day : max, weekChartData[0]).name}
+                                                <small>({weekChartData.reduce((max, day) => day.tamamlanan > max.tamamlanan ? day : max, weekChartData[0]).tamamlanan} pomodoro)</small>
+                                            </span>
+                                        </div>
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                                </svg>
+                                                Hedef Üzeri Günler
+                                            </span>
+                                            <span className="chart-stat-value">
+                                                {weekChartData.filter(day => day.tamamlanan >= 8).length} gün
+                                            </span>
+                                        </div>
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                     <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
                                                     <polyline points="17 6 23 6 23 12"></polyline>
                                                 </svg>
-                                                <h3>Günlük Verimlilik Trendi</h3>
-                                            </div>
-                                            <div className="chart-legend">
-                                                <div className="legend-item">
-                                                    <div className="legend-color" style={{ backgroundColor: COLORS[2] }}></div>
-                                                    <span>Verimlilik</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="chart-wrapper">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                                                    <XAxis
-                                                        dataKey="name"
-                                                        axisLine={false}
-                                                        tickLine={false}
-                                                        tick={{ fill: 'var(--color-foreground)', opacity: 0.8 }}
-                                                    />
-                                                    <YAxis
-                                                        axisLine={false}
-                                                        tickLine={false}
-                                                        domain={[0, 100]}
-                                                        tickFormatter={(value) => `${value}%`}
-                                                        tick={{ fill: 'var(--color-foreground)', opacity: 0.8 }}
-                                                    />
-                                                    <Tooltip
-                                                        content={({ active, payload, label }) => {
-                                                            if (active && payload && payload.length) {
-                                                                return (
-                                                                    <div className="chart-tooltip">
-                                                                        <div className="chart-tooltip-label">{label}</div>
-                                                                        <div className="chart-tooltip-value" style={{ color: COLORS[2] }}>
-                                                                            {`${Math.min(100, Math.round((payload[0].value / 8) * 100))}%`}
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            }
-                                                            return null;
-                                                        }}
-                                                    />
-                                                    <Line
-                                                        type="monotone"
-                                                        dataKey="tamamlanan"
-                                                        name="Verimlilik"
-                                                        stroke={COLORS[2]}
-                                                        strokeWidth={3}
-                                                        dot={{ r: 6, fill: COLORS[2], strokeWidth: 0 }}
-                                                        activeDot={{ r: 8, fill: COLORS[2], stroke: 'white', strokeWidth: 2 }}
-                                                    />
-                                                    <ReferenceLine
-                                                        y={8}
-                                                        stroke="#e74c3c"
-                                                        strokeDasharray="3 3"
-                                                        label={{
-                                                            value: "Hedef",
-                                                            position: "right",
-                                                            fill: "#e74c3c",
-                                                            fontSize: 12
-                                                        }}
-                                                    />
-                                                </LineChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                        <div className="chart-summary">
-                                            <div className="chart-stat-item">
-                                                <span className="chart-stat-label">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                                    </svg>
-                                                    En Yüksek Verimlilik
-                                                </span>
-                                                <span className="chart-stat-value">
-                                                    {Math.max(...chartData.map(day => Math.min(100, Math.round((day.tamamlanan / 8) * 100))))}%
-                                                </span>
-                                            </div>
-                                            <div className="chart-stat-item">
-                                                <span className="chart-stat-label">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <circle cx="12" cy="12" r="10"></circle>
-                                                        <polyline points="12 6 12 12 16 14"></polyline>
-                                                    </svg>
-                                                    Ortalama Verimlilik
-                                                </span>
-                                                <span className="chart-stat-value">
-                                                    {Math.round(chartData.reduce((sum, day) => sum + Math.min(100, Math.round((day.tamamlanan / 8) * 100)), 0) / chartData.length)}%
-                                                </span>
-                                            </div>
-                                            <div className="chart-stat-item">
-                                                <span className="chart-stat-label">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                                                        <polyline points="17 6 23 6 23 12"></polyline>
-                                                    </svg>
-                                                    Hedef Üzeri Günler
-                                                </span>
-                                                <span className="chart-stat-value">
-                                                    {chartData.filter(day => day.tamamlanan >= 8).length} gün
-                                                </span>
-                                            </div>
+                                                Günlük Ortalama
+                                            </span>
+                                            <span className="chart-stat-value">
+                                                {Math.round(weekChartData.reduce((sum, day) => sum + day.tamamlanan, 0) / weekChartData.length)} pomodoro
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

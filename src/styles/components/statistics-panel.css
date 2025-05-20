@@ -1,0 +1,132 @@
+.heatmap-container {
+    padding: 20px;
+    background: var(--color-panel);
+    border-radius: var(--border-radius-lg);
+    margin: 20px 0;
+}
+
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.heatmap-cell {
+    aspect-ratio: 1;
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.1);
+    z-index: 1;
+}
+
+.heatmap-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-foreground);
+    opacity: 0.9;
+}
+
+.heatmap-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    text-align: center;
+}
+
+.heatmap-label {
+    font-size: 12px;
+    color: var(--color-foreground);
+    opacity: 0.7;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.chart-summary {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.chart-stat-item {
+    background: var(--color-panel, #fff);
+    border-radius: 1rem;
+    box-shadow: 0 2px 16px 0 rgba(60, 60, 60, 0.07);
+    padding: 1.5rem 2rem;
+    min-width: 200px;
+    flex: 1 1 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: box-shadow 0.2s;
+}
+
+.chart-stat-item:hover {
+    box-shadow: 0 4px 24px 0 rgba(60, 60, 60, 0.13);
+}
+
+.chart-stat-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    color: var(--color-foreground, #333);
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.chart-stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-primary, #40c463);
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.chart-stat-value small {
+    font-size: 1rem;
+    color: var(--color-foreground, #888);
+    font-weight: 400;
+}
+
+@media (max-width: 700px) {
+    .chart-summary {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .chart-stat-item {
+        min-width: 0;
+        width: 100%;
+        align-items: flex-start;
+    }
+}

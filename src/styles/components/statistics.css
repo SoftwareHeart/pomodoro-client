@@ -314,19 +314,14 @@
     background: linear-gradient(90deg, var(--color-accent), var(--color-accent-dark));
 }
 
-.statistics-charts {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    margin-top: 1.5rem;
-}
-
-.statistics-charts.modern,
-.statistics-trends {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-lg);
-    margin-top: var(--spacing-md);
+.statistics-charts,
+.statistics-charts.modern {
+    all: unset;
+    display: block;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+    grid-template-columns: none;
 }
 
 .chart-container {
@@ -583,17 +578,11 @@
 }
 
 /* Responsive Media Queries */
-@media (min-width: 768px) {
-    .statistics-cards.modern-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-
+@media (min-width: 768px),
+(min-width: 1024px) {
     .statistics-charts {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .productivity-insights {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: none !important;
+        gap: 0 !important;
     }
 }
 
@@ -985,10 +974,4 @@
     color: var(--color-foreground);
     opacity: 0.8;
     line-height: 1.6;
-}
-
-@media (min-width: 1024px) {
-    .statistics-charts {
-        grid-template-columns: repeat(2, 1fr);
-    }
 }
