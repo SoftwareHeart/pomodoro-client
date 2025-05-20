@@ -79,39 +79,83 @@
 }
 
 .login-prompt-mini {
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-md);
-    background-color: rgba(var(--color-primary-rgb), 0.05);
-    border-left: 4px solid var(--color-primary);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.08), rgba(var(--color-primary-rgb), 0.05));
+    border: 1px solid rgba(var(--color-primary-rgb), 0.2);
     margin-bottom: var(--spacing-md);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal);
+}
+
+.login-prompt-mini:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(var(--color-primary-rgb), 0.3);
 }
 
 .login-prompt-mini-text {
     font-size: var(--font-size-sm);
     color: var(--color-foreground);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.login-prompt-mini-text::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: var(--color-primary);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
 }
 
 .login-prompt-mini-actions {
     display: flex;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md);
+    margin-left: var(--spacing-xl);
 }
 
 .login-prompt-mini-btn {
-    font-size: var(--font-size-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--border-radius-md);
     font-weight: 500;
     transition: all var(--transition-fast);
     text-decoration: none;
-    background-color: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
     color: white;
+    border: none;
+    box-shadow: var(--shadow-sm);
 }
 
 .login-prompt-mini-btn:hover {
-    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    opacity: 0.95;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.5);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .login-prompt-card {

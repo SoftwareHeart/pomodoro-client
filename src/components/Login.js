@@ -30,6 +30,11 @@ function Login() {
         }
     };
 
+    const handleContinueWithoutLogin = () => {
+        showVisualNotification('Misafir olarak devam ediyorsunuz', 'info', 3000);
+        navigate('/');
+    };
+
     return (
         <div className="auth-container">
             <div className="auth-card">
@@ -69,6 +74,12 @@ function Login() {
                     <p>
                         Hesabınız yok mu? <Link to="/register">Kaydolun</Link>
                     </p>
+                    <button
+                        onClick={handleContinueWithoutLogin}
+                        className="auth-continue-btn"
+                    >
+                        Giriş Yapmadan Devam Et
+                    </button>
                 </div>
             </div>
         </div>

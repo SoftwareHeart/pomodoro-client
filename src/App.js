@@ -243,6 +243,17 @@ function AppContent() {
 
       <main>
         <div className="app-column">
+          {!isAuthenticated() && (
+            <div className="login-prompt-mini" style={{ marginBottom: 'var(--spacing-xl)' }}>
+              <span className="login-prompt-mini-text">
+                Görevleri kaydetmek ve istatistiklerinizi görüntülemek için giriş yapın
+              </span>
+              <div className="login-prompt-mini-actions">
+                <Link to="/login" className="login-prompt-mini-btn">Giriş Yap</Link>
+                <Link to="/register" className="login-prompt-mini-btn">Kayıt Ol</Link>
+              </div>
+            </div>
+          )}
           <div className="top-row">
             <div className="pomodoro-section">
               <Timer
@@ -267,18 +278,6 @@ function AppContent() {
                 <div className="active-task">
                   <h3>Aktif Görev:</h3>
                   <p>{tasks.find(task => task.id === activeTaskId)?.taskName}</p>
-                </div>
-              )}
-
-              {!isAuthenticated() && (
-                <div className="login-prompt-mini">
-                  <span className="login-prompt-mini-text">
-                    Görevleri kaydetmek ve istatistiklerinizi görüntülemek için giriş yapın
-                  </span>
-                  <div className="login-prompt-mini-actions">
-                    <Link to="/login" className="login-prompt-mini-btn">Giriş Yap</Link>
-                    <Link to="/register" className="login-prompt-mini-btn">Kayıt Ol</Link>
-                  </div>
                 </div>
               )}
             </div>
