@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
+import ConfirmModal from './ConfirmModal';
 
-function Timer({ duration, isActive, onComplete, resetFlag }) {
+function Timer({ duration, isActive, onComplete, resetFlag, onModeChange }) {
     // State değişkenleri
     const [timeLeft, setTimeLeft] = useState(duration * 60);
     const [workerReady, setWorkerReady] = useState(false);
     const [hasStarted, setHasStarted] = useState(false);
     const [isCompleting, setIsCompleting] = useState(false);
     const [mode, setMode] = useState('pomodoro'); // 'pomodoro', 'shortBreak', 'longBreak'
-    const [pomodoroCount, setPomodoroCount] = useState(0);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [pendingMode, setPendingMode] = useState(null);
 
     // Sabit değerler
     const SHORT_BREAK_DURATION = 5; // 5 dakika
@@ -45,8 +47,37 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
                 command: 'reset',
                 duration: newDuration * 60
             });
+            workerRef.current.postMessage({
+                command: 'pause'
+            });
         }
-    }, [duration, workerReady]);
+        setHasStarted(false);
+        if (onModeChange) onModeChange();
+    }, [duration, workerReady, onModeChange]);
+
+    // Mod butonuna tıklama fonksiyonu
+    const handleModeButtonClick = (newMode) => {
+        if (isActive) {
+            setPendingMode(newMode);
+            setShowConfirmModal(true);
+        } else {
+            changeMode(newMode);
+        }
+    };
+
+    // Modal onay fonksiyonu
+    const handleConfirmModeChange = () => {
+        setShowConfirmModal(false);
+        if (pendingMode) {
+            changeMode(pendingMode);
+        }
+    };
+
+    // Modal iptal fonksiyonu
+    const handleCancelModeChange = () => {
+        setShowConfirmModal(false);
+        setPendingMode(null);
+    };
 
     // Worker'dan gelen mesajları işleyen callback
     const handleWorkerMessage = useCallback((event) => {
@@ -63,18 +94,9 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
                 playSound('complete');
 
                 if (mode === 'pomodoro') {
-                    const newPomodoroCount = pomodoroCount + 1;
-                    setPomodoroCount(newPomodoroCount);
-
-                    if (newPomodoroCount % POMODOROS_UNTIL_LONG_BREAK === 0) {
-                        showVisualNotification('Pomodoro tamamlandı! Uzun mola zamanı.', 'success', 5000);
-                        showBrowserNotification('Pomodoro Tamamlandı', 'Uzun mola zamanı!');
-                        changeMode('longBreak');
-                    } else {
-                        showVisualNotification('Pomodoro tamamlandı! Kısa mola zamanı.', 'success', 5000);
-                        showBrowserNotification('Pomodoro Tamamlandı', 'Kısa mola zamanı!');
-                        changeMode('shortBreak');
-                    }
+                    showVisualNotification('Pomodoro tamamlandı! Kısa mola zamanı.', 'success', 5000);
+                    showBrowserNotification('Pomodoro Tamamlandı', 'Kısa mola zamanı!');
+                    changeMode('shortBreak');
                 } else {
                     showVisualNotification('Mola bitti! Yeni bir pomodoro başlatın.', 'info', 5000);
                     showBrowserNotification('Mola Bitti', 'Yeni bir pomodoro başlatın!');
@@ -90,7 +112,7 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
             default:
                 console.log('Bilinmeyen mesaj tipi:', type);
         }
-    }, [onComplete, playSound, showVisualNotification, showBrowserNotification, mode, pomodoroCount, changeMode]);
+    }, [onComplete, playSound, showVisualNotification, showBrowserNotification, mode, changeMode]);
 
     // Worker'ı oluştur
     useEffect(() => {
@@ -116,14 +138,34 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
     // Zamanlayıcı sıfırlandığında veya süre değiştiğinde
     useEffect(() => {
         if (workerRef.current && workerReady) {
+            const newDuration = mode === 'pomodoro' ? duration :
+                mode === 'shortBreak' ? SHORT_BREAK_DURATION :
+                    LONG_BREAK_DURATION;
+
             workerRef.current.postMessage({
                 command: 'reset',
-                duration: duration * 60
+                duration: newDuration * 60
             });
+            setTimeLeft(newDuration * 60); // Süreyi güncelle
             setHasStarted(false);  // Sıfırlama yapıldığında başlama durumunu sıfırla
             setIsCompleting(false); // Tamamlanma durumunu da sıfırla
         }
-    }, [duration, resetFlag, workerReady]);
+    }, [resetFlag]); // Sadece resetFlag değiştiğinde çalışsın
+
+    // Süre değiştiğinde timer'ı güncelle
+    useEffect(() => {
+        if (workerRef.current && workerReady) {
+            const newDuration = mode === 'pomodoro' ? duration :
+                mode === 'shortBreak' ? SHORT_BREAK_DURATION :
+                    LONG_BREAK_DURATION;
+
+            workerRef.current.postMessage({
+                command: 'reset',
+                duration: newDuration * 60
+            });
+            setTimeLeft(newDuration * 60);
+        }
+    }, [duration, workerReady, mode]);
 
     // İsActive değişimlerini yönet
     useEffect(() => {
@@ -162,19 +204,19 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
             <div className="timer-mode">
                 <button
                     className={mode === 'pomodoro' ? 'active' : ''}
-                    onClick={() => changeMode('pomodoro')}
+                    onClick={() => handleModeButtonClick('pomodoro')}
                 >
                     Pomodoro
                 </button>
                 <button
                     className={mode === 'shortBreak' ? 'active' : ''}
-                    onClick={() => changeMode('shortBreak')}
+                    onClick={() => handleModeButtonClick('shortBreak')}
                 >
                     Kısa Mola
                 </button>
                 <button
                     className={mode === 'longBreak' ? 'active' : ''}
-                    onClick={() => changeMode('longBreak')}
+                    onClick={() => handleModeButtonClick('longBreak')}
                 >
                     Uzun Mola
                 </button>
@@ -182,9 +224,15 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
             <div className="time-display">
                 {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
             </div>
-            <div className="pomodoro-count">
-                Tamamlanan Pomodoro: {pomodoroCount}
-            </div>
+            <ConfirmModal
+                isOpen={showConfirmModal}
+                title="Mod Değiştirilsin mi?"
+                message="Zamanlayıcı çalışıyor. Mod değiştirmek istiyor musunuz? Zamanlayıcı sıfırlanacak ve duraklatılacak."
+                confirmButtonText="Evet, değiştir"
+                cancelButtonText="Hayır"
+                onConfirm={handleConfirmModeChange}
+                onCancel={handleCancelModeChange}
+            />
         </div>
     );
 }

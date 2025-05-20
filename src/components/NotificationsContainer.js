@@ -11,7 +11,7 @@ function NotificationsContainer() {
     useEffect(() => {
         // Bildirim olaylarını dinle
         const handleNotification = (event) => {
-            const { message, type, duration } = event.detail;
+            const { message, type, duration, onClick } = event.detail;
             const id = Date.now();
 
             // Eski bildirimleri kontrol et - aynı mesajdan var mı?
@@ -26,6 +26,7 @@ function NotificationsContainer() {
                     newNotifications[existingMessageIndex] = {
                         ...newNotifications[existingMessageIndex],
                         id, // Yeni ID atadık, böylece aynı mesaj gibi görünse de yeni bildirimi fark eder
+                        onClick // onClick fonksiyonunu güncelle
                     };
                     return newNotifications;
                 });
@@ -33,7 +34,7 @@ function NotificationsContainer() {
                 // Yeni bildirim ekle
                 setNotifications(prev => [
                     ...prev,
-                    { id, message, type, duration: duration || 5000 }
+                    { id, message, type, duration: duration || 5000, onClick }
                 ]);
             }
         };
@@ -57,6 +58,7 @@ function NotificationsContainer() {
                     type={notification.type}
                     duration={notification.duration}
                     onClose={() => handleClose(notification.id)}
+                    onClick={notification.onClick}
                 />
             ))}
         </div>

@@ -56,12 +56,12 @@ export const NotificationProvider = ({ children }) => {
     };
 
     // Görsel bildirim gösterme (DOM'da bir element olarak)
-    const showVisualNotification = (message, type = 'info', duration = 5000) => {
+    const showVisualNotification = (message, type = 'info', duration = 5000, onClick) => {
         if (!settings.visualEnabled) return;
 
         // Bildirim eklemek için EventBus kullan
         const event = new CustomEvent('notification', {
-            detail: { message, type, duration }
+            detail: { message, type, duration, onClick }
         });
         document.dispatchEvent(event);
     };

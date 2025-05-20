@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-function Notification({ message, type = 'info', duration = 5000, onClose }) {
+function Notification({ message, type = 'info', duration = 5000, onClose, onClick }) {
     const [isVisible, setIsVisible] = useState(false);
     const timerRef = useRef(null);
     const animationTimeoutRef = useRef(null);
@@ -104,6 +104,10 @@ function Notification({ message, type = 'info', duration = 5000, onClose }) {
             style={{ '--notification-duration': `${duration}ms` }}
             aria-live="polite"
             role="alert"
+            onClick={() => {
+                if (onClick) onClick();
+                onClose();
+            }}
         >
             <div className="notification-icon">
                 {getIcon()}

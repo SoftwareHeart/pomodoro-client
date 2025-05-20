@@ -71,34 +71,43 @@ function AppContent() {
   };
 
   // Görev seçme işlemi için modal gösterme
-  // Görev seçme işlemi için yeni yaklaşım
   const handleSelectTask = (taskId) => {
+    const selectedTask = tasks.find(task => task.id === taskId);
+
+    // Eğer seçilen görev tamamlanmışsa uyarı göster
+    if (selectedTask.isCompleted) {
+      showVisualNotification(
+        'Bu görev tamamlanmış. Tekrar başlatmak için tıklayın.',
+        'info',
+        3000,
+        () => {
+          setActiveTaskId(taskId);
+          setCurrentSession(selectedTask);
+          setResetFlag(prev => prev + 1);
+        }
+      );
+      return;
+    }
+
     // Eğer zamanlayıcı çalışıyorsa ve farklı bir görev seçilmeye çalışılıyorsa
     if (isActive && activeTaskId !== taskId) {
-      if (window.confirm("Zamanlayıcı çalışıyor. Görev değiştirmek istediğinize emin misiniz?")) {
-        // Kullanıcı onayladı: zamanlayıcıyı durdur ve görevi değiştir
-        setIsActive(false);
-        setActiveTaskId(taskId);
-
-        // Seçilen görevi bul ve currentSession'a ata
-        const selectedTask = tasks.find(task => task.id === taskId);
-        setCurrentSession(selectedTask);
-
-        // Reset timer when task changes
-        setResetFlag(prev => prev + 1);
-      }
-      // Kullanıcı onaylamadı: hiçbir şey yapma
+      showVisualNotification(
+        'Zamanlayıcı çalışıyor. Görev değiştirmek için tıklayın.',
+        'warning',
+        3000,
+        () => {
+          setIsActive(false);
+          setActiveTaskId(taskId);
+          setCurrentSession(selectedTask);
+          setResetFlag(prev => prev + 1);
+        }
+      );
       return;
     }
 
     // Zamanlayıcı çalışmıyorsa doğrudan görev değiştir
     setActiveTaskId(taskId);
-
-    // Seçilen görevi bul ve currentSession'a ata
-    const selectedTask = tasks.find(task => task.id === taskId);
     setCurrentSession(selectedTask);
-
-    // Reset timer when task changes
     setResetFlag(prev => prev + 1);
   };
 
@@ -178,6 +187,11 @@ function AppContent() {
     }
   };
 
+  // Timer mod değiştiğinde çağrılacak fonksiyon
+  const handleModeChange = () => {
+    setIsActive(false);
+  };
+
   // Aktif görevin süresini bul
   const activeDuration = activeTaskId
     ? tasks.find(task => task.id === activeTaskId)?.duration || 25
@@ -211,6 +225,7 @@ function AppContent() {
                 isActive={isActive}
                 onComplete={handleComplete}
                 resetFlag={resetFlag}
+                onModeChange={handleModeChange}
               />
 
               <PomodoroControls
