@@ -5,15 +5,48 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
     // State değişkenleri
     const [timeLeft, setTimeLeft] = useState(duration * 60);
     const [workerReady, setWorkerReady] = useState(false);
-    const [hasStarted, setHasStarted] = useState(false);  // Başlama durumunu izlemek için state
-    const [isCompleting, setIsCompleting] = useState(false); // Timer'ın tamamlanma durumunu izlemek için yeni state
+    const [hasStarted, setHasStarted] = useState(false);
+    const [isCompleting, setIsCompleting] = useState(false);
+    const [mode, setMode] = useState('pomodoro'); // 'pomodoro', 'shortBreak', 'longBreak'
+    const [pomodoroCount, setPomodoroCount] = useState(0);
+
+    // Sabit değerler
+    const SHORT_BREAK_DURATION = 5; // 5 dakika
+    const LONG_BREAK_DURATION = 15; // 15 dakika
+    const POMODOROS_UNTIL_LONG_BREAK = 4; // 4 pomodoro sonra uzun mola
 
     // Referanslar
     const workerRef = useRef(null);
-    const previousIsActiveRef = useRef(isActive);  // Önceki isActive değerini takip etmek için referans
+    const previousIsActiveRef = useRef(isActive);
 
     // Context
     const { playSound, showVisualNotification, showBrowserNotification } = useNotification();
+
+    // Timer modunu değiştiren fonksiyon
+    const changeMode = useCallback((newMode) => {
+        setMode(newMode);
+        let newDuration;
+        switch (newMode) {
+            case 'pomodoro':
+                newDuration = duration;
+                break;
+            case 'shortBreak':
+                newDuration = SHORT_BREAK_DURATION;
+                break;
+            case 'longBreak':
+                newDuration = LONG_BREAK_DURATION;
+                break;
+            default:
+                newDuration = duration;
+        }
+        setTimeLeft(newDuration * 60);
+        if (workerRef.current && workerReady) {
+            workerRef.current.postMessage({
+                command: 'reset',
+                duration: newDuration * 60
+            });
+        }
+    }, [duration, workerReady]);
 
     // Worker'dan gelen mesajları işleyen callback
     const handleWorkerMessage = useCallback((event) => {
@@ -25,13 +58,30 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
                 break;
 
             case 'complete':
-                setHasStarted(false);  // Timer tamamlandığında başlama durumunu sıfırla
-                setIsCompleting(true); // Tamamlanma durumunu true yap
+                setHasStarted(false);
+                setIsCompleting(true);
                 playSound('complete');
-                showVisualNotification('Pomodoro tamamlandı! Bir mola verin.', 'success', 5000);
-                showBrowserNotification('Pomodoro Tamamlandı', 'Tebrikler! Şimdi bir mola hak ettiniz.');
+
+                if (mode === 'pomodoro') {
+                    const newPomodoroCount = pomodoroCount + 1;
+                    setPomodoroCount(newPomodoroCount);
+
+                    if (newPomodoroCount % POMODOROS_UNTIL_LONG_BREAK === 0) {
+                        showVisualNotification('Pomodoro tamamlandı! Uzun mola zamanı.', 'success', 5000);
+                        showBrowserNotification('Pomodoro Tamamlandı', 'Uzun mola zamanı!');
+                        changeMode('longBreak');
+                    } else {
+                        showVisualNotification('Pomodoro tamamlandı! Kısa mola zamanı.', 'success', 5000);
+                        showBrowserNotification('Pomodoro Tamamlandı', 'Kısa mola zamanı!');
+                        changeMode('shortBreak');
+                    }
+                } else {
+                    showVisualNotification('Mola bitti! Yeni bir pomodoro başlatın.', 'info', 5000);
+                    showBrowserNotification('Mola Bitti', 'Yeni bir pomodoro başlatın!');
+                    changeMode('pomodoro');
+                }
+
                 onComplete();
-                // 1 saniye sonra tamamlanma durumunu temizle
                 setTimeout(() => {
                     setIsCompleting(false);
                 }, 1000);
@@ -40,7 +90,7 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
             default:
                 console.log('Bilinmeyen mesaj tipi:', type);
         }
-    }, [onComplete, playSound, showVisualNotification, showBrowserNotification]);
+    }, [onComplete, playSound, showVisualNotification, showBrowserNotification, mode, pomodoroCount, changeMode]);
 
     // Worker'ı oluştur
     useEffect(() => {
@@ -109,8 +159,31 @@ function Timer({ duration, isActive, onComplete, resetFlag }) {
 
     return (
         <div className="timer">
+            <div className="timer-mode">
+                <button
+                    className={mode === 'pomodoro' ? 'active' : ''}
+                    onClick={() => changeMode('pomodoro')}
+                >
+                    Pomodoro
+                </button>
+                <button
+                    className={mode === 'shortBreak' ? 'active' : ''}
+                    onClick={() => changeMode('shortBreak')}
+                >
+                    Kısa Mola
+                </button>
+                <button
+                    className={mode === 'longBreak' ? 'active' : ''}
+                    onClick={() => changeMode('longBreak')}
+                >
+                    Uzun Mola
+                </button>
+            </div>
             <div className="time-display">
                 {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+            </div>
+            <div className="pomodoro-count">
+                Tamamlanan Pomodoro: {pomodoroCount}
             </div>
         </div>
     );
