@@ -2,13 +2,22 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 import ConfirmModal from './ConfirmModal';
 
-function Timer({ duration, isActive, onComplete, resetFlag, onModeChange }) {
+function Timer({
+    duration,
+    isActive,
+    onComplete,
+    resetFlag,
+    onModeChange,
+    currentMode,
+    onAnonymousModeChange,
+    isAuthenticated
+}) {
     // State değişkenleri
     const [timeLeft, setTimeLeft] = useState(duration * 60);
     const [workerReady, setWorkerReady] = useState(false);
     const [hasStarted, setHasStarted] = useState(false);
     const [isCompleting, setIsCompleting] = useState(false);
-    const [mode, setMode] = useState('pomodoro'); // 'pomodoro', 'shortBreak', 'longBreak'
+    const [mode, setMode] = useState(currentMode || 'pomodoro'); // 'pomodoro', 'shortBreak', 'longBreak'
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingMode, setPendingMode] = useState(null);
 
@@ -24,9 +33,23 @@ function Timer({ duration, isActive, onComplete, resetFlag, onModeChange }) {
     // Context
     const { playSound, showVisualNotification, showBrowserNotification } = useNotification();
 
+    // Sync mode state with currentMode prop (for anonymous users)
+    useEffect(() => {
+        if (currentMode && mode !== currentMode) {
+            setMode(currentMode);
+        }
+    }, [currentMode, mode]);
+
     // Timer modunu değiştiren fonksiyon
     const changeMode = useCallback((newMode) => {
         setMode(newMode);
+
+        // For anonymous users, notify parent component of mode change
+        if (!isAuthenticated && onAnonymousModeChange) {
+            onAnonymousModeChange(newMode);
+            return;
+        }
+
         let newDuration;
         switch (newMode) {
             case 'pomodoro':
@@ -53,7 +76,7 @@ function Timer({ duration, isActive, onComplete, resetFlag, onModeChange }) {
         }
         setHasStarted(false);
         if (onModeChange) onModeChange();
-    }, [duration, workerReady, onModeChange]);
+    }, [duration, workerReady, onModeChange, isAuthenticated, onAnonymousModeChange]);
 
     // Mod butonuna tıklama fonksiyonu
     const handleModeButtonClick = (newMode) => {
@@ -96,11 +119,23 @@ function Timer({ duration, isActive, onComplete, resetFlag, onModeChange }) {
                 if (mode === 'pomodoro') {
                     showVisualNotification('Pomodoro tamamlandı! Kısa mola zamanı.', 'success', 5000);
                     showBrowserNotification('Pomodoro Tamamlandı', 'Kısa mola zamanı!');
-                    changeMode('shortBreak');
+
+                    // Change to shortBreak mode
+                    if (isAuthenticated) {
+                        changeMode('shortBreak');
+                    } else if (onAnonymousModeChange) {
+                        onAnonymousModeChange('shortBreak');
+                    }
                 } else {
                     showVisualNotification('Mola bitti! Yeni bir pomodoro başlatın.', 'info', 5000);
                     showBrowserNotification('Mola Bitti', 'Yeni bir pomodoro başlatın!');
-                    changeMode('pomodoro');
+
+                    // Change to pomodoro mode
+                    if (isAuthenticated) {
+                        changeMode('pomodoro');
+                    } else if (onAnonymousModeChange) {
+                        onAnonymousModeChange('pomodoro');
+                    }
                 }
 
                 onComplete();
@@ -112,7 +147,7 @@ function Timer({ duration, isActive, onComplete, resetFlag, onModeChange }) {
             default:
                 console.log('Bilinmeyen mesaj tipi:', type);
         }
-    }, [onComplete, playSound, showVisualNotification, showBrowserNotification, mode, changeMode]);
+    }, [onComplete, playSound, showVisualNotification, showBrowserNotification, mode, changeMode, isAuthenticated, onAnonymousModeChange]);
 
     // Worker'ı oluştur
     useEffect(() => {
@@ -150,7 +185,7 @@ function Timer({ duration, isActive, onComplete, resetFlag, onModeChange }) {
             setHasStarted(false);  // Sıfırlama yapıldığında başlama durumunu sıfırla
             setIsCompleting(false); // Tamamlanma durumunu da sıfırla
         }
-    }, [resetFlag]); // Sadece resetFlag değiştiğinde çalışsın
+    }, [resetFlag, duration, mode]); // Now depends on mode as well
 
     // Süre değiştiğinde timer'ı güncelle
     useEffect(() => {

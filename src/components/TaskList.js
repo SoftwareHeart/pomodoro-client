@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import ConfirmModal from './ConfirmModal';
+import LoginPrompt from './LoginPrompt';
+import { useAuth } from '../contexts/AuthContext';
 
 function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId, loading }) {
     const [confirmModal, setConfirmModal] = useState({
@@ -15,6 +17,7 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId, loading }) 
     const [showBottomShadow, setShowBottomShadow] = useState(true);
 
     const scrollbarRef = useRef(null);
+    const { isAuthenticated } = useAuth();
 
     // Scroll olayını izleme fonksiyonu
     const handleScroll = (e) => {
@@ -136,6 +139,23 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId, loading }) 
     const handleFilterChange = (newFilter) => {
         setFilter(newFilter);
     };
+
+    // Kullanıcı giriş yapmamışsa login prompt göster
+    if (!isAuthenticated()) {
+        return (
+            <div className="task-list-container">
+                <div className="task-list">
+                    <div className="task-list-header">
+                        <h2>Görevler</h2>
+                    </div>
+                    <LoginPrompt
+                        message="Görevlerinizi Görüntüleyin"
+                        actionText="Görevlerinizi görüntülemek, düzenlemek ve yeni görevler eklemek için giriş yapın veya kayıt olun."
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="task-list-container">

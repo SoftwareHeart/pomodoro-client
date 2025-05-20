@@ -1,6 +1,6 @@
 // src/App.js
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import Timer from './components/Timer';
 import PomodoroControls from './components/PomodoroControls';
@@ -14,11 +14,15 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Profile from './components/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
+import LoginPrompt from './components/LoginPrompt';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { TasksProvider, useTasks } from './contexts/TasksContext';
 import Header from './components/Header';
+
+// Import the CSS files
+import './styles/components/login-prompt.css';
 
 // Ana uygulama bileşeni - Provider'ları burada oluşturuyoruz
 function App() {
@@ -36,11 +40,8 @@ function App() {
                     <Profile />
                   </ProtectedRoute>
                 } />
-                <Route path="/" element={
-                  <ProtectedRoute>
-                    <AppContent />
-                  </ProtectedRoute>
-                } />
+                {/* The main route does not require auth anymore */}
+                <Route path="/" element={<AppContent />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
               <NotificationsContainer />
@@ -60,8 +61,12 @@ function AppContent() {
   const [currentSession, setCurrentSession] = useState(null);
   const [resetFlag, setResetFlag] = useState(0);
   const { showVisualNotification } = useNotification();
-  const { currentUser } = useAuth();
+  const { currentUser, isAuthenticated } = useAuth();
   const { tasks, loading, error: tasksError, fetchTasks, addTask, deleteTask, completeTask } = useTasks();
+
+  // Anonymous timer state - for users who aren't logged in
+  const [anonymousTimerDuration, setAnonymousTimerDuration] = useState(25);
+  const [anonymousMode, setAnonymousMode] = useState('pomodoro'); // 'pomodoro', 'shortBreak', 'longBreak'
 
   // Sayfa yüklendiğinde ve kullanıcı değiştiğinde görevleri getir
   useEffect(() => {
@@ -72,6 +77,16 @@ function AppContent() {
 
   // Yeni görev ekleme
   const handleAddTask = async (newTask) => {
+    // If not authenticated, show notification
+    if (!isAuthenticated()) {
+      showVisualNotification(
+        'Görev eklemek için giriş yapmalısınız',
+        'warning',
+        4000
+      );
+      return;
+    }
+
     try {
       const addedTask = await addTask(newTask);
       // Eğer henüz aktif görev seçilmediyse, yeni eklenen görevi seç
@@ -85,6 +100,11 @@ function AppContent() {
 
   // Görev seçme işlemi için modal gösterme
   const handleSelectTask = (taskId) => {
+    // If not authenticated, don't try to select a task
+    if (!isAuthenticated()) {
+      return;
+    }
+
     const selectedTask = tasks.find(task => task.id === taskId);
 
     // Eğer seçilen görev tamamlanmışsa uyarı göster
@@ -141,14 +161,20 @@ function AppContent() {
 
   // Timer'ı başlatma
   const handleStart = async () => {
-    if (!activeTaskId) {
-      showVisualNotification('Lütfen önce bir görev seçin veya ekleyin.', 'warning', 4000);
-      return;
-    }
+    if (isAuthenticated()) {
+      // Authenticated user flow
+      if (!activeTaskId) {
+        showVisualNotification('Lütfen önce bir görev seçin veya ekleyin.', 'warning', 4000);
+        return;
+      }
 
-    setIsActive(true);
-    const selectedTask = tasks.find(task => task.id === activeTaskId);
-    setCurrentSession(selectedTask);
+      setIsActive(true);
+      const selectedTask = tasks.find(task => task.id === activeTaskId);
+      setCurrentSession(selectedTask);
+    } else {
+      // Anonymous user flow - just start the timer with selected duration
+      setIsActive(true);
+    }
   };
 
   // Timer'ı duraklatma
@@ -164,14 +190,15 @@ function AppContent() {
 
   // Timer tamamlandığında
   const handleComplete = async () => {
-    if (!currentSession) return;
-
-    try {
-      await completeTask(currentSession.id);
-      setIsActive(false);
-    } catch (error) {
-      // Hata yönetimi TasksContext'te yapılıyor
+    if (isAuthenticated() && currentSession) {
+      try {
+        await completeTask(currentSession.id);
+      } catch (error) {
+        // Hata yönetimi TasksContext'te yapılıyor
+      }
     }
+
+    setIsActive(false);
   };
 
   // Timer mod değiştiğinde çağrılacak fonksiyon
@@ -179,16 +206,35 @@ function AppContent() {
     setIsActive(false);
   };
 
+  // Anonymous mode change handler
+  const handleAnonymousModeChange = (mode) => {
+    setAnonymousMode(mode);
+
+    // Set appropriate duration based on mode
+    if (mode === 'pomodoro') {
+      setAnonymousTimerDuration(25);
+    } else if (mode === 'shortBreak') {
+      setAnonymousTimerDuration(5);
+    } else if (mode === 'longBreak') {
+      setAnonymousTimerDuration(15);
+    }
+
+    setResetFlag(prev => prev + 1);
+  };
+
   // Aktif görevin süresini bul
-  const activeDuration = activeTaskId
-    ? tasks.find(task => task.id === activeTaskId)?.duration || 25
-    : 25;
+  const activeDuration = isAuthenticated() ?
+    (activeTaskId ? tasks.find(task => task.id === activeTaskId)?.duration || 25 : 25) :
+    anonymousTimerDuration;
+
+  // Current timer mode (for anonymous users)
+  const currentMode = isAuthenticated() ? undefined : anonymousMode;
 
   return (
     <div className="app">
       <Header />
 
-      {tasksError && (
+      {tasksError && isAuthenticated() && (
         <div className="error-message">
           <p>{tasksError}</p>
           <button onClick={() => fetchTasks()}>Tekrar Dene</button>
@@ -205,6 +251,9 @@ function AppContent() {
                 onComplete={handleComplete}
                 resetFlag={resetFlag}
                 onModeChange={handleModeChange}
+                currentMode={currentMode}
+                onAnonymousModeChange={handleAnonymousModeChange}
+                isAuthenticated={isAuthenticated()}
               />
 
               <PomodoroControls
@@ -214,10 +263,22 @@ function AppContent() {
                 onReset={handleReset}
               />
 
-              {activeTaskId && (
+              {isAuthenticated() && activeTaskId && (
                 <div className="active-task">
                   <h3>Aktif Görev:</h3>
                   <p>{tasks.find(task => task.id === activeTaskId)?.taskName}</p>
+                </div>
+              )}
+
+              {!isAuthenticated() && (
+                <div className="login-prompt-mini">
+                  <span className="login-prompt-mini-text">
+                    Görevleri kaydetmek ve istatistiklerinizi görüntülemek için giriş yapın
+                  </span>
+                  <div className="login-prompt-mini-actions">
+                    <Link to="/login" className="login-prompt-mini-btn">Giriş Yap</Link>
+                    <Link to="/register" className="login-prompt-mini-btn">Kayıt Ol</Link>
+                  </div>
                 </div>
               )}
             </div>

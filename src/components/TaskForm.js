@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
+import { Link } from 'react-router-dom';
 
 function TaskForm({ onAddTask }) {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [taskName, setTaskName] = useState('');
     const [duration, setDuration] = useState(25);
     const [customDuration, setCustomDuration] = useState(false);
+    const { isAuthenticated } = useAuth();
+    const { showVisualNotification } = useNotification();
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -48,6 +53,20 @@ function TaskForm({ onAddTask }) {
     };
 
     const toggleForm = () => {
+        // If not authenticated, show notification and don't open form
+        if (!isAuthenticated()) {
+            showVisualNotification(
+                'Görev eklemek için giriş yapmalısınız',
+                'warning',
+                4000,
+                () => {
+                    // Callback when notification is clicked - redirect to login
+                    window.location.href = '/login';
+                }
+            );
+            return;
+        }
+
         setIsFormOpen(!isFormOpen);
     };
 

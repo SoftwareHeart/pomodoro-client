@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import apiService, { createAuthApiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import LoginPrompt from './LoginPrompt';
 import {
     LineChart,
     Line,
@@ -36,7 +37,7 @@ function StatisticsPanel() {
     const [previousDayStats, setPreviousDayStats] = useState(null);
     const [isNewUser, setIsNewUser] = useState(false);
     const { tasks } = useTasks();
-    const { currentUser, getAuthHeader } = useAuth();
+    const { currentUser, getAuthHeader, isAuthenticated } = useAuth();
     const statsService = useMemo(() => {
         return currentUser ? createAuthApiService(getAuthHeader) : apiService;
     }, [currentUser, getAuthHeader]);
@@ -45,7 +46,14 @@ function StatisticsPanel() {
     const userId = useMemo(() => {
         return currentUser ? currentUser.id : "defaultUser";
     }, [currentUser]);
+
     const fetchAllStats = useCallback(async () => {
+        // If not authenticated, don't fetch stats
+        if (!isAuthenticated()) {
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
 
@@ -86,10 +94,23 @@ function StatisticsPanel() {
         } finally {
             setLoading(false);
         }
-    }, [statsService, userId, tasks]);
+    }, [statsService, userId, tasks, isAuthenticated]);
+
     useEffect(() => {
         fetchAllStats();
     }, [fetchAllStats]);
+
+    // If user is not authenticated, show login prompt
+    if (!isAuthenticated()) {
+        return (
+            <div className="statistics-panel modern">
+                <LoginPrompt
+                    message="İstatistiklerinizi Görüntüleyin"
+                    actionText="Pomodoro istatistiklerinizi takip etmek ve ilerlemenizi görmek için giriş yapın veya kayıt olun."
+                />
+            </div>
+        );
+    }
 
     // Trend hesaplama fonksiyonu - dakika bazında karşılaştırma
     const calculateTrend = useMemo(() => {
@@ -334,7 +355,6 @@ function StatisticsPanel() {
 
         return Math.min(100, Math.round((weeklyCompleted / weeklyTarget) * 100));
     };
-
 
     const calculateGoalProgress = () => {
         return Math.min(100, (stats.completedToday / 8) * 100);
