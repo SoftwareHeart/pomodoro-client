@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ThemeSelector from './ThemeSelector';
 import NotificationSettings from './NotificationSettings';
+import CalendarToggle from './CalendarToggle';
 
 function Header() {
     const { currentUser, isAuthenticated } = useAuth();
@@ -24,6 +25,7 @@ function Header() {
                         </Link>
                     </div>
                 )}
+                <CalendarToggle />
                 <NotificationSettings />
                 <ThemeSelector />
             </div>

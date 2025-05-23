@@ -24,3 +24,5 @@
 @import './styles/components/statistics.css';
 @import './styles/components/theme-settings.css';
 @import './styles/components/auth.css';
+@import './styles/components/calendar.css';
+@import './styles/components/login-prompt.css';

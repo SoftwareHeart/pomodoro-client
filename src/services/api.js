@@ -200,6 +200,58 @@ export const createAuthApiService = (getAuthHeader) => {
                 console.error('Error fetching user profile:', error);
                 throw error;
             }
+        },
+
+        // Takvim verileri getir
+        getCalendarData: async (startDate = null, endDate = null) => {
+            try {
+                let url = `/Pomodoro/calendar-data`;
+                const params = new URLSearchParams();
+
+                if (startDate) {
+                    params.append('startDate', startDate);
+                }
+                if (endDate) {
+                    params.append('endDate', endDate);
+                }
+
+                if (params.toString()) {
+                    url += `?${params.toString()}`;
+                }
+
+                console.log('Fetching calendar data from:', url);
+                const response = await axiosInstance.get(url);
+                console.log('Calendar data response:', response.data);
+                return response.data;
+            } catch (error) {
+                console.error('Error fetching calendar data:', error);
+                throw error;
+            }
+        },
+
+        // Aylık istatistikleri getir
+        getMonthlyStats: async (year, month) => {
+            try {
+                const response = await axiosInstance.get(`/Pomodoro/monthly-stats?year=${year}&month=${month}`);
+                console.log('Monthly stats response:', response.data);
+                return response.data;
+            } catch (error) {
+                console.error('Error fetching monthly stats:', error);
+                throw error;
+            }
+        },
+
+        // Günlük detayları getir
+        getDailyDetail: async (date) => {
+            try {
+                const dateString = date instanceof Date ? date.toISOString().split('T')[0] : date;
+                const response = await axiosInstance.get(`/Pomodoro/daily-detail?date=${dateString}`);
+                console.log('Daily detail response:', response.data);
+                return response.data;
+            } catch (error) {
+                console.error('Error fetching daily detail:', error);
+                throw error;
+            }
         }
     };
 };
