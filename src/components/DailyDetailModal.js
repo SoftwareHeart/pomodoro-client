@@ -41,7 +41,13 @@ function DailyDetailModal({ isOpen, onClose, selectedDate }) {
             setLoading(true);
             setError(null);
 
-            const response = await authApiService.getDailyDetail(selectedDate);
+            // Yerel tarih string'i oluştur
+            const year = selectedDate.getFullYear();
+            const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+            const day = String(selectedDate.getDate()).padStart(2, '0');
+            const dateString = `${year}-${month}-${day}`;
+
+            const response = await authApiService.getDailyDetail(dateString);
             setDailyData(response);
         } catch (error) {
             console.error('Günlük detay alınırken hata:', error);

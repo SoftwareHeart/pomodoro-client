@@ -30,6 +30,20 @@ function CalendarView() {
     // Türkçe gün isimleri
     const dayNames = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
+    // Tarihi yerel saat dilimine göre string'e çevir (timezone kayması olmadan)
+    const formatDateToLocal = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    // String tarihi yerel tarih objesine çevir (timezone kayması olmadan)
+    const parseLocalDate = (dateString) => {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    };
+
     // Ayın günlerini hesapla
     const getDaysInMonth = (date) => {
         const year = date.getFullYear();
@@ -52,11 +66,6 @@ function CalendarView() {
         fetchCalendarData();
     }, [currentMonth, currentYear]);
 
-    useEffect(() => {
-        setCalendarData({}); // Calendar data'yı temizle
-        fetchCalendarData();
-    }, [currentMonth, currentYear]);
-
     // fetchCalendarData'yı useCallback ile sarmalayalım dependency sorununu çözmek için
     const fetchCalendarData = useCallback(async () => {
         if (!isAuthenticated()) {
@@ -67,14 +76,14 @@ function CalendarView() {
         try {
             setLoading(true);
 
-            // Mevcut ayın başı ve sonu + önceki ay ve sonraki ay
+            // Mevcut ayın başı ve sonu + önceki ay ve sonraki ay (yerel saat diliminde)
             const startDate = new Date(currentYear, currentMonth - 1, 1); // Önceki ayın başı
             const endDate = new Date(currentYear, currentMonth + 2, 0); // Sonraki ayın sonu
 
             // Backend'den takvim verilerini al
             const calendarResponse = await authApiService.getCalendarData(
-                startDate.toISOString().split('T')[0],
-                endDate.toISOString().split('T')[0]
+                formatDateToLocal(startDate),
+                formatDateToLocal(endDate)
             );
 
             // Veriyi günlere göre organize et
@@ -82,11 +91,12 @@ function CalendarView() {
 
             if (calendarResponse && calendarResponse.data) {
                 calendarResponse.data.forEach(dayData => {
+                    // Tarih string'ini doğrudan kullan (timezone kayması olmadan)
                     dataByDate[dayData.date] = {
                         pomodoros: dayData.pomodoros,
                         minutes: dayData.minutes,
                         sessions: dayData.sessions || [],
-                        date: new Date(dayData.date)
+                        date: parseLocalDate(dayData.date) // Yerel tarih objesi oluştur
                     };
                 });
             }
@@ -130,6 +140,8 @@ function CalendarView() {
     // Günlük detay modal'ını aç
     const handleDayClick = (date, dayData) => {
         const today = new Date();
+        // Sadece tarih kısmını karşılaştır (saat farklarını göz ardı et)
+        today.setHours(23, 59, 59, 999);
 
         // Gelecek tarihler için tıklama devre dışı
         if (date > today) {
@@ -164,6 +176,8 @@ function CalendarView() {
         const { daysInMonth, firstDayOfWeek } = getDaysInMonth(currentDate);
         const days = [];
         const today = new Date();
+        // Bugünün tarih kısmını al (saat farklarını göz ardı et)
+        const todayDateString = formatDateToLocal(today);
 
         // Önceki ayın boş günleri
         for (let i = 0; i < firstDayOfWeek; i++) {
@@ -175,10 +189,10 @@ function CalendarView() {
         // Bu ayın günleri - currentMonth ve currentYear kullan
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(currentYear, currentMonth, day);
-            const dateString = date.toISOString().split('T')[0];
+            const dateString = formatDateToLocal(date); // Yerel format kullan
             const dayData = calendarData[dateString] || { pomodoros: 0, minutes: 0 };
-            const isToday = date.toDateString() === today.toDateString();
-            const isFuture = date > today;
+            const isToday = dateString === todayDateString; // String karşılaştırması
+            const isFuture = dateString > todayDateString; // String karşılaştırması
 
             days.push(
                 <div
@@ -208,7 +222,7 @@ function CalendarView() {
         // Sadece mevcut ayın günlerini say
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(currentYear, currentMonth, day);
-            const dateString = date.toISOString().split('T')[0];
+            const dateString = formatDateToLocal(date); // Yerel format kullan
             const dayData = calendarData[dateString];
 
             if (dayData && dayData.pomodoros > 0) {
