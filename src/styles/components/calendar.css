@@ -41,11 +41,21 @@
     justify-content: center;
 }
 
-.calendar-nav-btn:hover {
+.calendar-nav-btn:hover:not(:disabled) {
     background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.05), rgba(var(--color-primary-rgb), 0.02));
     border-color: var(--color-primary);
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
+}
+
+.calendar-nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.calendar-nav-btn:disabled svg {
+    opacity: 0.5;
 }
 
 .calendar-title {
@@ -74,9 +84,15 @@
     box-shadow: var(--shadow-sm);
 }
 
-.today-btn:hover {
+.today-btn:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+}
+
+.today-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .calendar-stats {
@@ -132,7 +148,63 @@
 .calendar-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
+    gap: 4px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ay geçiş animasyonları */
+.calendar-days.transitioning {
+    pointer-events: none;
+}
+
+.calendar-days-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.calendar-days-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+}
+
+.calendar-days-slide.slide-out-left {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+.calendar-days-slide.slide-in-left {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.calendar-days-slide.slide-out-right {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.calendar-days-slide.slide-in-right {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.calendar-days-slide.slide-from-left {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+.calendar-days-slide.slide-from-right {
+    transform: translateX(100%);
+    opacity: 0;
 }
 
 .calendar-day {
@@ -571,6 +643,22 @@
     box-shadow: none;
     border-radius: 0;
     margin: 0;
+    padding: var(--spacing-xl);
+}
+
+.calendar-modal-content .calendar-grid {
+    margin-bottom: var(--spacing-lg);
+}
+
+.calendar-modal-content .calendar-days,
+.calendar-modal-content .calendar-days-container,
+.calendar-modal-content .calendar-days-slide {
+    min-height: auto;
+}
+
+.calendar-modal-content .calendar-day {
+    height: auto;
+    min-height: 50px;
 }
 
 /* Modal animasyonları */
@@ -617,7 +705,7 @@
         font-size: var(--font-size-lg);
     }
 
-    .calendar-container {
+    .calendar-modal-content .calendar-container {
         padding: var(--spacing-lg);
         border-radius: 0;
     }
@@ -636,8 +724,9 @@
         font-size: var(--font-size-lg);
     }
 
-    .calendar-days {
-        min-height: 250px;
+    .calendar-day {
+        min-height: 40px;
+        padding: 2px;
     }
 
     .day-number {
@@ -655,8 +744,8 @@
         grid-template-columns: 1fr;
     }
 
-    .calendar-days {
-        min-height: 200px;
+    .calendar-day {
+        min-height: 35px;
     }
 
     .weekday {
@@ -668,7 +757,7 @@
         padding: var(--spacing-sm);
     }
 
-    .calendar-container {
+    .calendar-modal-content .calendar-container {
         padding: var(--spacing-md);
     }
 }
@@ -1049,7 +1138,7 @@
     margin: 0;
 }
 
-/* Responsive düzenlemeler */
+/* Responsive düzenlemeler - Daily Detail Modal */
 @media (max-width: 768px) {
     .daily-detail-modal {
         max-width: none;
@@ -1107,4 +1196,19 @@
 
 :root[data-theme="dark"] .progress-bar {
     background: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .calendar-close-btn {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+}
+
+:root[data-theme="dark"] .calendar-close-btn:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.1));
+}
+
+/* Spin animasyonu */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }

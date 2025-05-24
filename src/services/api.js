@@ -8,9 +8,7 @@ const apiService = {
     // Tüm Pomodoro oturumlarını getir
     getSessions: async () => {
         try {
-            console.log('Fetching sessions from:', `${API_URL}/Pomodoro`);
             const response = await axios.get(`${API_URL}/Pomodoro`);
-            console.log('Sessions response:', response.data);
             return response.data;
         } catch (error) {
             console.error('Error fetching sessions:', error);
@@ -65,9 +63,7 @@ const apiService = {
     // İstatistikleri getir
     getStatistics: async (userId = "defaultUser") => {
         try {
-            console.log('Fetching stats from:', `${API_URL}/Pomodoro/statistics?userId=${userId}`);
             const response = await axios.get(`${API_URL}/Pomodoro/statistics?userId=${userId}`);
-            console.log('Stats response:', response.data);
             return response.data;
         } catch (error) {
             console.error('Error fetching statistics:', error);
@@ -113,9 +109,7 @@ export const createAuthApiService = (getAuthHeader) => {
         // Tüm Pomodoro oturumlarını getir (yetkilendirilmiş)
         getSessions: async () => {
             try {
-                console.log('Fetching sessions from:', `${API_URL}/Pomodoro`);
                 const response = await axiosInstance.get(`/Pomodoro`);
-                console.log('Sessions response:', response.data);
                 return response.data;
             } catch (error) {
                 console.error('Error fetching sessions:', error);
@@ -170,9 +164,7 @@ export const createAuthApiService = (getAuthHeader) => {
         // İstatistikleri getir (yetkilendirilmiş)
         getStatistics: async (userId = "defaultUser") => {
             try {
-                console.log('Fetching stats from:', `${API_URL}/Pomodoro/statistics?userId=${userId}`);
                 const response = await axiosInstance.get(`/Pomodoro/statistics?userId=${userId}`);
-                console.log('Stats response:', response.data);
                 return response.data;
             } catch (error) {
                 console.error('Error fetching statistics:', error);
@@ -219,9 +211,7 @@ export const createAuthApiService = (getAuthHeader) => {
                     url += `?${params.toString()}`;
                 }
 
-                console.log('Fetching calendar data from:', url);
                 const response = await axiosInstance.get(url);
-                console.log('Calendar data response:', response.data);
                 return response.data;
             } catch (error) {
                 console.error('Error fetching calendar data:', error);
@@ -233,7 +223,6 @@ export const createAuthApiService = (getAuthHeader) => {
         getMonthlyStats: async (year, month) => {
             try {
                 const response = await axiosInstance.get(`/Pomodoro/monthly-stats?year=${year}&month=${month}`);
-                console.log('Monthly stats response:', response.data);
                 return response.data;
             } catch (error) {
                 console.error('Error fetching monthly stats:', error);
@@ -246,7 +235,6 @@ export const createAuthApiService = (getAuthHeader) => {
             try {
                 const dateString = date instanceof Date ? date.toISOString().split('T')[0] : date;
                 const response = await axiosInstance.get(`/Pomodoro/daily-detail?date=${dateString}`);
-                console.log('Daily detail response:', response.data);
                 return response.data;
             } catch (error) {
                 console.error('Error fetching daily detail:', error);
