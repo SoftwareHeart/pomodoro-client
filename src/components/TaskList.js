@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import ConfirmModal from './ConfirmModal';
 import LoginPrompt from './LoginPrompt';
 import { useAuth } from '../contexts/AuthContext';
 
-function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId, loading }) {
+function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, activeTaskId, loading }) {
     const [confirmModal, setConfirmModal] = useState({
         isOpen: false,
         taskId: null,
@@ -109,26 +109,54 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId, loading }) 
         return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
     };
 
-    // Görevleri filtrele ve sırala
-    const filteredTasks = tasks
-        .filter(task => {
-            // Önce filtre uygula
-            if (filter === 'active' && task.isCompleted) return false;
-            if (filter === 'completed' && !task.isCompleted) return false;
+    // Görevleri ada göre grupla ve özet kayıt üret
+    const groupedTasks = useMemo(() => {
+        const groups = new Map();
+        (tasks || []).forEach(t => {
+            if (!t || !t.taskName) return;
+            if (!groups.has(t.taskName)) groups.set(t.taskName, []);
+            groups.get(t.taskName).push(t);
+        });
 
-            // Sonra arama terimi uygula
-            if (searchTerm.trim() === '') return true;
-            return task.taskName.toLowerCase().includes(searchTerm.toLowerCase());
-        })
-        .sort((a, b) => {
-            // Önce tamamlanmamış görevleri göster
-            if (a.isCompleted !== b.isCompleted) {
-                return a.isCompleted ? 1 : -1;
-            }
+        const aggregated = [];
+        groups.forEach((list, name) => {
+            const sorted = [...list].sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+            const latest = sorted[0];
+            const totalMinutesSpent = list
+                .filter(x => x.isCompleted)
+                .reduce((sum, x) => sum + (x.duration || 0), 0);
+            const hasAnyActive = list.some(x => !x.isCompleted);
+            aggregated.push({
+                // temsilci kayıt
+                id: latest.id,
+                taskName: name,
+                duration: latest.duration,
+                startTime: latest.startTime,
+                endTime: latest.endTime,
+                isCompleted: !hasAnyActive && list.length > 0, // tümü tamamlandıysa true
+                // özet alanlar
+                _latest: latest,
+                _items: list,
+                totalMinutesSpent
+            });
+        });
 
-            // Sonra tarih sıralaması (en yeni eklenenler üstte)
+        // Tamamlanmamışlar üstte, sonra tarihe göre sırala
+        aggregated.sort((a, b) => {
+            if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
             return new Date(b.startTime) - new Date(a.startTime);
         });
+
+        return aggregated;
+    }, [tasks]);
+
+    // Gösterim için filtre uygula
+    const filteredTasks = groupedTasks.filter(task => {
+        if (filter === 'active' && task.isCompleted) return false;
+        if (filter === 'completed' && !task.isCompleted) return false;
+        if (searchTerm.trim() === '') return true;
+        return task.taskName.toLowerCase().includes(searchTerm.toLowerCase());
+    });
 
     // Arama kutusu değişimi
     const handleSearchChange = (e) => {
@@ -162,7 +190,7 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId, loading }) 
             <div className="task-list">
                 <div className="task-list-header">
                     <h2>Görevler</h2>
-                    <span className="task-count">{filteredTasks.length}/{tasks.length}</span>
+                    <span className="task-count">{filteredTasks.length}/{groupedTasks.length}</span>
                 </div>
 
                 <div className="task-list-toolbar">
@@ -252,7 +280,7 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId, loading }) 
                             <ul className="task-list-items">
                                 {filteredTasks.map(task => (
                                     <li
-                                        key={task.id}
+                                        key={task.taskName}
                                         className={`task-item ${task.id === activeTaskId ? 'active' : ''} ${task.isCompleted ? 'completed' : ''}`}
                                         onClick={() => onSelectTask(task.id)}
                                     >
@@ -278,6 +306,14 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId, loading }) 
                                                     </svg>
                                                     {task.duration} dk
                                                 </span>
+                                                {task.totalMinutesSpent != null && (
+                                                    <span className="task-spent" title="Bu görev adında tamamlanan tüm oturumların toplamı">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M3 12h18"></path>
+                                                        </svg>
+                                                        {task.totalMinutesSpent} dk harcandı
+                                                    </span>
+                                                )}
                                             </div>
 
                                             <div className="task-dates">
@@ -312,6 +348,20 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, activeTaskId, loading }) 
                                         </div>
 
                                         <div className="task-actions">
+                                            {!task.isCompleted && (
+                                                <button
+                                                    className="complete-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onCompleteTask && onCompleteTask(task.id);
+                                                    }}
+                                                    aria-label="Görevi Tamamla"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                                    </svg>
+                                                </button>
+                                            )}
                                             <button
                                                 className="delete-btn"
                                                 onClick={(e) => handleDeleteClick(e, task.id, task.taskName)}

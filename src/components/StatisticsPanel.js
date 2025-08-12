@@ -30,6 +30,10 @@ import { useTasks } from '../contexts/TasksContext';
 function StatisticsPanel() {
     const [stats, setStats] = useState(null);
     const [weeklyStats, setWeeklyStats] = useState([]);
+    const [monthlyStats, setMonthlyStats] = useState(null);
+    const [monthlyDailySeries, setMonthlyDailySeries] = useState([]);
+    const [allTimeStats, setAllTimeStats] = useState(null);
+    const [allMonthlySeries, setAllMonthlySeries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [timeRange, setTimeRange] = useState('week');
@@ -49,18 +53,28 @@ function StatisticsPanel() {
 
     // Trend hesaplama fonksiyonu - dakika bazında karşılaştırma
     const calculateTrend = useMemo(() => {
-        if (!stats || !previousDayStats || previousDayStats.totalMinutes === 0) {
+        // Seçili aralığın zaman serisine göre son iki nokta arasındaki yüzde değişimi
+        const series = (() => {
+            if (timeRange === 'week') return weeklyStats;
+            if (timeRange === 'month') return monthlyDailySeries;
+            return allMonthlySeries;
+        })();
+
+        if (!series || series.length < 2) {
             return { percentage: 0, isPositive: true };
         }
 
-        const difference = stats.minutesToday - previousDayStats.totalMinutes;
-        const percentage = Math.round((difference / previousDayStats.totalMinutes) * 100);
-
-        return {
-            percentage: Math.abs(percentage),
-            isPositive: percentage >= 0
-        };
-    }, [stats, previousDayStats]);
+        const last = series[series.length - 1];
+        const prev = series[series.length - 2];
+        const prevMinutes = prev.dakika || 0;
+        const lastMinutes = last.dakika || 0;
+        if (prevMinutes === 0) {
+            return { percentage: 0, isPositive: lastMinutes >= 0 };
+        }
+        const difference = lastMinutes - prevMinutes;
+        const percentage = Math.round((difference / prevMinutes) * 100);
+        return { percentage: Math.abs(percentage), isPositive: percentage >= 0 };
+    }, [timeRange, weeklyStats, monthlyDailySeries, allMonthlySeries]);
 
     // En verimli günü bulma
     const mostProductiveDay = useMemo(() => {
@@ -199,20 +213,50 @@ function StatisticsPanel() {
     }, [stats, isNewUser]);
 
     const chartData = useMemo(() => {
-        if (!weeklyStats || weeklyStats.length === 0 || isNewUser) {
-            return [];
-        }
-        return weeklyStats;
-    }, [weeklyStats, isNewUser]);
+        if (isNewUser) return [];
+        if (timeRange === 'week') return weeklyStats || [];
+        if (timeRange === 'month') return monthlyDailySeries || [];
+        return allMonthlySeries || [];
+    }, [timeRange, weeklyStats, monthlyDailySeries, allMonthlySeries, isNewUser]);
 
     const COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
 
     // Haftanın günleri sabit dizi
     const weekDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-    // chartData'yı haftanın günlerine göre sırala ve eksik günler için 0 tamamlanan ve 0 dakika koy
-    const weekChartData = weekDays.map(dayName =>
-        chartData.find(day => day.name === dayName) || { name: dayName, tamamlanan: 0, dakika: 0 }
-    );
+    // chartData'yı haftanın günlerine göre sırala ve eksik günler için 0 tamamlanan ve 0 dakika koy (yalnızca hafta görünümünde)
+    const weekChartData = useMemo(() => {
+        if (timeRange !== 'week') return chartData;
+        return weekDays.map(dayName =>
+            chartData.find(day => day.name === dayName) || { name: dayName, tamamlanan: 0, dakika: 0 }
+        );
+    }, [chartData, timeRange]);
+
+    const formatDateToLocal = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    // Seçili aralık için özet değerleri hesapla (erken return'lerden ÖNCE)
+    const selectedRangeTotals = useMemo(() => {
+        if (timeRange === 'week') {
+            const completed = (weeklyStats || []).reduce((sum, d) => sum + (d.tamamlanan || 0), 0);
+            const minutes = (weeklyStats || []).reduce((sum, d) => sum + (d.dakika || 0), 0);
+            const avg = completed > 0 ? Math.round(minutes / completed) : 0;
+            return { completed, minutes, avgDuration: avg, label: 'Bu Hafta' };
+        }
+        if (timeRange === 'month') {
+            const completed = (monthlyDailySeries || []).reduce((sum, d) => sum + (d.tamamlanan || 0), 0);
+            const minutes = (monthlyDailySeries || []).reduce((sum, d) => sum + (d.dakika || 0), 0);
+            const avg = completed > 0 ? Math.round(minutes / completed) : 0;
+            return { completed, minutes, avgDuration: avg, label: 'Bu Ay' };
+        }
+        const completed = allTimeStats?.totalPomodoros || 0;
+        const minutes = allTimeStats?.totalMinutes || 0;
+        const avg = completed > 0 ? Math.round(minutes / completed) : 0;
+        return { completed, minutes, avgDuration: avg, label: 'Tümü' };
+    }, [timeRange, weeklyStats, monthlyDailySeries, allTimeStats]);
 
     const fetchAllStats = useCallback(async () => {
         // If not authenticated, don't fetch stats
@@ -234,13 +278,62 @@ function StatisticsPanel() {
             setLoading(true);
 
             // Tüm verileri paralel olarak çekelim
-            const [generalStats, weeklyData] = await Promise.all([
+            const now = new Date();
+            const [generalStats, weeklyData, monthlyData] = await Promise.all([
                 statsService.getStatistics(userId),
                 statsService.getWeeklyStats(userId),
+                statsService.getMonthlyStats(now.getFullYear(), now.getMonth() + 1),
             ]);
 
             setStats(generalStats);
             setWeeklyStats(weeklyData);
+            setMonthlyStats(monthlyData);
+            setAllTimeStats({
+                totalPomodoros: generalStats.totalCompletedSessions,
+                totalMinutes: generalStats.totalMinutesWorked,
+                averageSessionDuration: generalStats.averageSessionDuration
+            });
+
+            // Aylık günlük seri (grafikler ve trendler için)
+            try {
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                const calendar = await statsService.getCalendarData(
+                    formatDateToLocal(monthStart),
+                    formatDateToLocal(monthEnd)
+                );
+                const dailySeries = (calendar?.data || []).map(d => ({
+                    name: d.date.slice(8, 10),
+                    tamamlanan: d.pomodoros,
+                    dakika: d.minutes
+                }));
+                setMonthlyDailySeries(dailySeries);
+            } catch (e) {
+                console.warn('Aylık günlük seri alınamadı', e);
+                setMonthlyDailySeries([]);
+            }
+
+            // Tüm zamanlar için aylık seri
+            try {
+                const sessions = await statsService.getSessions();
+                const completed = (sessions || []).filter(s => s.isCompleted && s.endTime);
+                const buckets = {};
+                completed.forEach(s => {
+                    const dt = new Date(s.endTime);
+                    if (!isNaN(dt)) {
+                        const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+                        if (!buckets[key]) buckets[key] = { name: key, tamamlanan: 0, dakika: 0 };
+                        buckets[key].tamamlanan += 1;
+                        buckets[key].dakika += s.duration || 0;
+                    }
+                });
+                const monthlySeries = Object.values(buckets)
+                    .sort((a, b) => (a.name < b.name ? -1 : 1));
+                setAllMonthlySeries(monthlySeries);
+            } catch (e) {
+                console.warn('Tüm zamanlar aylık seri oluşturulamadı', e);
+                setAllMonthlySeries([]);
+            }
 
             // Yeni kullanıcı kontrolü
             if (generalStats.totalCompletedSessions === 0 &&
@@ -355,6 +448,8 @@ function StatisticsPanel() {
         return hours > 0 ? `${hours}s ${mins}dk` : `${mins}dk`;
     };
 
+
+
     return (
         <div className="statistics-panel">
             {loading ? (
@@ -445,11 +540,11 @@ function StatisticsPanel() {
                                             </svg>
                                         </div>
                                         <div>
-                                            <div className="stat-value">{formatDuration(stats.minutesToday)}</div>
-                                            <div className="stat-label">Bugün Çalışma</div>
+                                            <div className="stat-value">{formatDuration(selectedRangeTotals.minutes)}</div>
+                                            <div className="stat-label">{selectedRangeTotals.label} Çalışma</div>
                                         </div>
                                     </div>
-                                    {previousDayStats && (
+                                    {chartData && chartData.length >= 2 && (
                                         <div className={`stat-trend ${calculateTrend.isPositive ? 'positive' : 'negative'}`}>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                 {calculateTrend.isPositive ? (
@@ -463,7 +558,7 @@ function StatisticsPanel() {
                                                     <polyline points="17 18 23 18 23 12"></polyline>
                                                 )}
                                             </svg>
-                                            <span>%{calculateTrend.percentage} ({calculateTrend.isPositive ? "dünden fazla" : "dünden az"})</span>
+                                            <span>%{calculateTrend.percentage} ({calculateTrend.isPositive ? "artış" : "azalış"})</span>
                                         </div>
                                     )}
                                 </div>
@@ -477,16 +572,22 @@ function StatisticsPanel() {
                                             </svg>
                                         </div>
                                         <div>
-                                            <div className="stat-value">{stats.completedToday}</div>
-                                            <div className="stat-label">Bugün Tamamlanan</div>
+                                            <div className="stat-value">{selectedRangeTotals.completed}</div>
+                                            <div className="stat-label">{selectedRangeTotals.label} Tamamlanan</div>
                                             <div className="stat-progress">
                                                 <div className="mini-progress">
                                                     <div
                                                         className="mini-progress-fill"
-                                                        style={{ width: `${Math.min(100, (stats.completedToday / 8) * 100)}%` }}
+                                                        style={{ width: `${Math.min(100, ((timeRange === 'week' ? selectedRangeTotals.completed / 56 : timeRange === 'month' ? selectedRangeTotals.completed / 240 : 1) * 100))}%` }}
                                                     ></div>
                                                 </div>
-                                                <span className="mini-progress-text">{Math.min(100, Math.round((stats.completedToday / 8) * 100))}%</span>
+                                                <span className="mini-progress-text">
+                                                    {timeRange === 'week'
+                                                        ? `${Math.min(100, Math.round((selectedRangeTotals.completed / 56) * 100))}%`
+                                                        : timeRange === 'month'
+                                                            ? `${Math.min(100, Math.round((selectedRangeTotals.completed / 240) * 100))}%`
+                                                            : `100%`}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -501,9 +602,9 @@ function StatisticsPanel() {
                                             </svg>
                                         </div>
                                         <div>
-                                            <div className="stat-value">{stats.totalCompletedSessions}</div>
-                                            <div className="stat-label">Toplam Pomodoro</div>
-                                            <div className="stat-mini-text">Ortalama: {Math.round(stats.averageSessionDuration)} dk/pomodoro</div>
+                                            <div className="stat-value">{selectedRangeTotals.completed}</div>
+                                            <div className="stat-label">Seçili Aralık Pomodoro</div>
+                                            <div className="stat-mini-text">Ortalama: {selectedRangeTotals.avgDuration} dk/pomodoro</div>
                                         </div>
                                     </div>
                                 </div>
@@ -519,11 +620,9 @@ function StatisticsPanel() {
                                             </svg>
                                         </div>
                                         <div>
-                                            <div className="stat-value">{formatDuration(stats.totalMinutesWorked)}</div>
-                                            <div className="stat-label">Toplam Çalışma</div>
-                                            <div className="stat-mini-text">Bu hafta: {
-                                                weeklyStats.reduce((sum, day) => sum + day.dakika, 0)
-                                            } dk</div>
+                                            <div className="stat-value">{formatDuration(allTimeStats.totalMinutes)}</div>
+                                            <div className="stat-label">Toplam Çalışma (Tümü)</div>
+                                            <div className="stat-mini-text">{selectedRangeTotals.label}: {selectedRangeTotals.minutes} dk</div>
                                         </div>
                                     </div>
                                 </div>
@@ -547,13 +646,23 @@ function StatisticsPanel() {
 
                                 <div className="summary-item">
                                     <div className="summary-header">
-                                        <span className="summary-label">Günlük Hedef (8 Pomodoro)</span>
-                                        <span className="summary-value">{stats.completedToday}/8</span>
+                                        <span className="summary-label">{timeRange === 'week' ? 'Haftalık Hedef (56 Pomodoro)' : timeRange === 'month' ? 'Aylık Hedef (~240 Pomodoro)' : 'Genel Hedef'}</span>
+                                        <span className="summary-value">
+                                            {timeRange === 'week' ? `${selectedRangeTotals.completed}/56` : timeRange === 'month' ? `${selectedRangeTotals.completed}/240` : `${allTimeStats.totalPomodoros}`}
+                                        </span>
                                     </div>
                                     <div className="progress-bar">
                                         <div
                                             className="progress-fill accent"
-                                            style={{ width: `${calculateGoalProgress()}%` }}
+                                            style={{
+                                                width: `${Math.round(
+                                                    timeRange === 'week'
+                                                        ? Math.min(100, (selectedRangeTotals.completed / 56) * 100)
+                                                        : timeRange === 'month'
+                                                            ? Math.min(100, (selectedRangeTotals.completed / 240) * 100)
+                                                            : 100
+                                                )}%`
+                                            }}
                                         ></div>
                                     </div>
                                 </div>
@@ -563,7 +672,7 @@ function StatisticsPanel() {
 
                     {activeTab === 'charts' && (
                         <>
-                            {chartData.length > 0 ? (
+                            {timeRange === 'week' && chartData.length > 0 ? (
                                 <div>
                                     <div className="statistics-charts">
                                         {/* Modern Area Chart */}
@@ -623,6 +732,70 @@ function StatisticsPanel() {
                                         </div>
                                     </div>
                                 </div>
+                            ) : timeRange === 'month' && monthlyStats ? (
+                                <div>
+                                    <div className="statistics-charts">
+                                        <ResponsiveContainer width="100%" height={260}>
+                                            <BarChart data={[{ name: 'Bu Ay', tamamlanan: monthlyStats.totalPomodoros, dakika: monthlyStats.totalMinutes }]}
+                                                margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis dataKey="name" />
+                                                <YAxis allowDecimals={false} />
+                                                <Tooltip formatter={(value, name) => name === 'tamamlanan' ? `${value} pomodoro` : `${value} dk`} />
+                                                <Bar dataKey="tamamlanan" name="Tamamlanan Pomodoro" fill="#40c463" />
+                                                <Bar dataKey="dakika" name="Dakika" fill="#3498db" />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="chart-summary">
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">Toplam Pomodoro</span>
+                                            <span className="chart-stat-value">{monthlyStats.totalPomodoros}</span>
+                                        </div>
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">Toplam Dakika</span>
+                                            <span className="chart-stat-value">{monthlyStats.totalMinutes} dk</span>
+                                        </div>
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">Aktif Gün</span>
+                                            <span className="chart-stat-value">{monthlyStats.activeDays} gün</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : timeRange === 'all' && allTimeStats ? (
+                                <div>
+                                    <div className="statistics-charts">
+                                        <ResponsiveContainer width="100%" height={260}>
+                                            <AreaChart data={allMonthlySeries} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                                                <defs>
+                                                    <linearGradient id="colorAll" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#9b59b6" stopOpacity={0.8} />
+                                                        <stop offset="95%" stopColor="#9b59b6" stopOpacity={0.1} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis dataKey="name" />
+                                                <YAxis allowDecimals={false} />
+                                                <Tooltip formatter={(value, name) => name === 'tamamlanan' ? `${value} pomodoro` : `${value} dk`} />
+                                                <Area type="monotone" dataKey="tamamlanan" name="Aylık Pomodoro" stroke="#9b59b6" fill="url(#colorAll)" strokeWidth={3} dot={{ r: 4, fill: '#9b59b6', strokeWidth: 0 }} activeDot={{ r: 6, fill: '#9b59b6', stroke: 'white', strokeWidth: 2 }} />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="chart-summary">
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">Toplam Pomodoro</span>
+                                            <span className="chart-stat-value">{allTimeStats.totalPomodoros}</span>
+                                        </div>
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">Toplam Dakika</span>
+                                            <span className="chart-stat-value">{allTimeStats.totalMinutes} dk</span>
+                                        </div>
+                                        <div className="chart-stat-item">
+                                            <span className="chart-stat-label">Oturum Ortalama Süre</span>
+                                            <span className="chart-stat-value">{Math.round(allTimeStats.averageSessionDuration)} dk</span>
+                                        </div>
+                                    </div>
+                                </div>
                             ) : (
                                 <div className="empty-stats-message">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
@@ -671,117 +844,137 @@ function StatisticsPanel() {
                                                         dot={{ r: 4, fill: COLORS[1], strokeWidth: 0 }}
                                                         activeDot={{ r: 6, fill: COLORS[1], stroke: 'white', strokeWidth: 2 }}
                                                     />
-                                                    <ReferenceLine y={200} stroke="#e74c3c" strokeDasharray="3 3" label={{
-                                                        value: "Hedef (200dk)",
-                                                        position: 'right',
-                                                        fill: "#e74c3c",
-                                                        fontSize: 12
-                                                    }} />
+                                                    {timeRange === 'week' && (
+                                                        <ReferenceLine y={200} stroke="#e74c3c" strokeDasharray="3 3" label={{
+                                                            value: "Hedef (200dk)",
+                                                            position: 'right',
+                                                            fill: "#e74c3c",
+                                                            fontSize: 12
+                                                        }} />
+                                                    )}
                                                 </LineChart>
                                             </ResponsiveContainer>
                                         </div>
                                         <div className="trend-stats">
                                             <div className="trend-stat-item">
-                                                <span className="trend-stat-label">Haftalık Toplam</span>
+                                                <span className="trend-stat-label">{timeRange === 'week' ? 'Haftalık Toplam' : timeRange === 'month' ? 'Aylık Toplam' : 'Aylık Ortalama'}</span>
                                                 <span className="trend-stat-value">
-                                                    {weeklyStats.reduce((sum, day) => sum + day.dakika, 0)} dk
+                                                    {timeRange === 'week'
+                                                        ? weeklyStats.reduce((sum, day) => sum + day.dakika, 0)
+                                                        : timeRange === 'month'
+                                                            ? monthlyDailySeries.reduce((sum, day) => sum + day.dakika, 0)
+                                                            : Math.round((allMonthlySeries.reduce((sum, m) => sum + m.dakika, 0) / Math.max(1, allMonthlySeries.length)))} dk
                                                 </span>
                                             </div>
                                             <div className="trend-stat-item">
                                                 <span className="trend-stat-label">Günlük Ortalama</span>
                                                 <span className="trend-stat-value">
-                                                    {Math.round(weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / weeklyStats.length)} dk
+                                                    {timeRange === 'week'
+                                                        ? Math.round(weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / Math.max(1, weeklyStats.length))
+                                                        : timeRange === 'month'
+                                                            ? Math.round(monthlyDailySeries.reduce((sum, day) => sum + day.dakika, 0) / Math.max(1, monthlyDailySeries.length))
+                                                            : Math.round((allMonthlySeries.reduce((sum, m) => sum + m.dakika, 0) / Math.max(1, allMonthlySeries.length)) / 30)} dk
                                                 </span>
                                             </div>
                                             <div className="trend-stat-item">
                                                 <span className="trend-stat-label">En Uzun Çalışma</span>
                                                 <span className="trend-stat-value">
-                                                    {Math.max(...weeklyStats.map(day => day.dakika))} dk
-                                                    <span className="trend-stat-day">
-                                                        ({weeklyStats.find(day => day.dakika === Math.max(...weeklyStats.map(d => d.dakika)))?.name || ''})
-                                                    </span>
+                                                    {(() => {
+                                                        const series = timeRange === 'week' ? weeklyStats : timeRange === 'month' ? monthlyDailySeries : allMonthlySeries;
+                                                        if (!series || series.length === 0) return 0;
+                                                        const maxVal = Math.max(...series.map(d => d.dakika || 0));
+                                                        const maxItem = series.find(d => (d.dakika || 0) === maxVal);
+                                                        return (
+                                                            <>
+                                                                {maxVal} dk
+                                                                <span className="trend-stat-day">({maxItem?.name || ''})</span>
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="trend-card">
-                                        <div className="trend-header">
-                                            <h3>Haftalık Hedef İlerleme</h3>
-                                        </div>
-                                        <div className="goal-progress">
-                                            <div className="goal-details">
-                                                <div className="goal-info">
-                                                    <span className="goal-label">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                            <circle cx="12" cy="12" r="10"></circle>
-                                                            <polyline points="12 6 12 12 16 14"></polyline>
-                                                        </svg>
-                                                        Haftalık Hedef
-                                                    </span>
-                                                    <span className="goal-value">
-                                                        1400 dk
-                                                        <small>(56 pomodoro)</small>
-                                                    </span>
+                                    {timeRange === 'week' && (
+                                        <div className="trend-card">
+                                            <div className="trend-header">
+                                                <h3>Haftalık Hedef İlerleme</h3>
+                                            </div>
+                                            <div className="goal-progress">
+                                                <div className="goal-details">
+                                                    <div className="goal-info">
+                                                        <span className="goal-label">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <circle cx="12" cy="12" r="10"></circle>
+                                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                                            </svg>
+                                                            Haftalık Hedef
+                                                        </span>
+                                                        <span className="goal-value">
+                                                            1400 dk
+                                                            <small>(56 pomodoro)</small>
+                                                        </span>
+                                                    </div>
+                                                    <div className="goal-info">
+                                                        <span className="goal-label">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                                            </svg>
+                                                            Tamamlanan
+                                                        </span>
+                                                        <span className="goal-value">
+                                                            {weeklyStats.reduce((sum, day) => sum + day.dakika, 0)} dk
+                                                            <small>({Math.round(weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 25)} pomodoro)</small>
+                                                        </span>
+                                                    </div>
+                                                    <div className="goal-info">
+                                                        <span className="goal-label">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                                                <polyline points="17 6 23 6 23 12"></polyline>
+                                                            </svg>
+                                                            Kalan
+                                                        </span>
+                                                        <span className="goal-value">
+                                                            {Math.max(0, 1400 - weeklyStats.reduce((sum, day) => sum + day.dakika, 0))} dk
+                                                            <small>({Math.round(Math.max(0, 1400 - weeklyStats.reduce((sum, day) => sum + day.dakika, 0)) / 25)} pomodoro)</small>
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div className="goal-info">
-                                                    <span className="goal-label">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                                        </svg>
-                                                        Tamamlanan
-                                                    </span>
-                                                    <span className="goal-value">
-                                                        {weeklyStats.reduce((sum, day) => sum + day.dakika, 0)} dk
-                                                        <small>({Math.round(weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 25)} pomodoro)</small>
-                                                    </span>
-                                                </div>
-                                                <div className="goal-info">
-                                                    <span className="goal-label">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                                                            <polyline points="17 6 23 6 23 12"></polyline>
-                                                        </svg>
-                                                        Kalan
-                                                    </span>
-                                                    <span className="goal-value">
-                                                        {Math.max(0, 1400 - weeklyStats.reduce((sum, day) => sum + day.dakika, 0))} dk
-                                                        <small>({Math.round(Math.max(0, 1400 - weeklyStats.reduce((sum, day) => sum + day.dakika, 0)) / 25)} pomodoro)</small>
-                                                    </span>
+                                                <div className="goal-progress-bar">
+                                                    <div
+                                                        className="goal-progress-fill"
+                                                        style={{
+                                                            width: `${Math.min(100, (weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 1400) * 100)}%`
+                                                        }}
+                                                    />
+                                                    <div className="goal-progress-text">
+                                                        {Math.round((weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 1400) * 100)}%
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="goal-progress-bar">
-                                                <div
-                                                    className="goal-progress-fill"
-                                                    style={{
-                                                        width: `${Math.min(100, (weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 1400) * 100)}%`
-                                                    }}
-                                                />
-                                                <div className="goal-progress-text">
-                                                    {Math.round((weeklyStats.reduce((sum, day) => sum + day.dakika, 0) / 1400) * 100)}%
-                                                </div>
-                                            </div>
-                                        </div>
 
-                                        <div className="trend-insight">
-                                            <div className="trend-insight-header">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                                                    <polyline points="17 6 23 6 23 12"></polyline>
-                                                </svg>
-                                                <h4>İlerleme Trendi</h4>
-                                            </div>
-                                            <div className="trend-insight-content">
-                                                <p>
-                                                    Son 2 haftada pomodoro tamamlama sayınız {calculateTrend.isPositive ? 'artıyor' : 'azalıyor'}.
-                                                    {calculateTrend.isPositive
-                                                        ? ' Bu tempoyla devam ederseniz, hedeflerinize daha hızlı ulaşabilirsiniz.'
-                                                        : ' Daha fazla pomodoro tamamlamak için molaları daha etkili kullanmayı deneyebilirsiniz.'}
-                                                </p>
+                                            <div className="trend-insight">
+                                                <div className="trend-insight-header">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                                        <polyline points="17 6 23 6 23 12"></polyline>
+                                                    </svg>
+                                                    <h4>İlerleme Trendi</h4>
+                                                </div>
+                                                <div className="trend-insight-content">
+                                                    <p>
+                                                        Son 2 haftada pomodoro tamamlama sayınız {calculateTrend.isPositive ? 'artıyor' : 'azalıyor'}.
+                                                        {calculateTrend.isPositive
+                                                            ? ' Bu tempoyla devam ederseniz, hedeflerinize daha hızlı ulaşabilirsiniz.'
+                                                            : ' Daha fazla pomodoro tamamlamak için molaları daha etkili kullanmayı deneyebilirsiniz.'}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="empty-stats-message">
@@ -796,8 +989,9 @@ function StatisticsPanel() {
                         </>
                     )}
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }
 

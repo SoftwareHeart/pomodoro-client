@@ -62,7 +62,7 @@ function AppContent() {
   const [resetFlag, setResetFlag] = useState(0);
   const { showVisualNotification } = useNotification();
   const { currentUser, isAuthenticated } = useAuth();
-  const { tasks, loading, error: tasksError, fetchTasks, addTask, deleteTask, completeTask } = useTasks();
+  const { tasks, loading, error: tasksError, fetchTasks, addTask, deleteTask, completeTask, recordPomodoroForTask } = useTasks();
 
   // Anonymous timer state - for users who aren't logged in
   const [anonymousTimerDuration, setAnonymousTimerDuration] = useState(25);
@@ -159,6 +159,19 @@ function AppContent() {
     }
   };
 
+  // Görevi manuel tamamla
+  const handleMarkTaskComplete = async (taskId) => {
+    if (!isAuthenticated()) return;
+    try {
+      await completeTask(taskId);
+      if (activeTaskId === taskId) {
+        setIsActive(false);
+      }
+    } catch (error) {
+      // Hata yönetimi TasksContext'te yapılıyor
+    }
+  };
+
   // Timer'ı başlatma
   const handleStart = async () => {
     if (isAuthenticated()) {
@@ -190,14 +203,15 @@ function AppContent() {
 
   // Timer tamamlandığında
   const handleComplete = async () => {
+    // Oturum bittiğinde istatistiklere kayıt at (görev tamamlanmadan)
     if (isAuthenticated() && currentSession) {
       try {
-        await completeTask(currentSession.id);
+        await recordPomodoroForTask(currentSession.taskName, currentSession.duration);
+        await fetchTasks();
       } catch (error) {
-        // Hata yönetimi TasksContext'te yapılıyor
+        // Görsel bir uyarı eklemek istenirse burada yapılabilir
       }
     }
-
     setIsActive(false);
   };
 
@@ -290,6 +304,7 @@ function AppContent() {
                   activeTaskId={activeTaskId}
                   onSelectTask={handleSelectTask}
                   onDeleteTask={handleDeleteTask}
+                  onCompleteTask={handleMarkTaskComplete}
                   loading={loading}
                 />
               </div>

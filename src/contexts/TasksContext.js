@@ -97,6 +97,19 @@ export function TasksProvider({ children }) {
         }
     }, [authApiService]);
 
+    // Timer tamamlandığında istatistiklere işlenecek arka plan oturumu oluştur
+    // Not: tasks state'ini kirletmemek için yeni oluşturulan ve tamamlanan oturumu listeye eklemiyoruz
+    const recordPomodoroForTask = useCallback(async (taskName, duration) => {
+        try {
+            const newSession = await authApiService.createSession({ taskName, duration });
+            await authApiService.completeSession(newSession.id);
+            return true;
+        } catch (error) {
+            console.error("Arka plan pomodoro kaydı oluşturulurken hata oluştu:", error);
+            throw error;
+        }
+    }, [authApiService]);
+
     // Context için sağlanacak değerler
     const value = useMemo(() => ({
         tasks,
@@ -105,8 +118,9 @@ export function TasksProvider({ children }) {
         fetchTasks,
         addTask,
         deleteTask,
-        completeTask
-    }), [tasks, loading, error, fetchTasks, addTask, deleteTask, completeTask]);
+        completeTask,
+        recordPomodoroForTask
+    }), [tasks, loading, error, fetchTasks, addTask, deleteTask, completeTask, recordPomodoroForTask]);
 
     return (
         <TasksContext.Provider value={value}>
