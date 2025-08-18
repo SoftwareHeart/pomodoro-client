@@ -297,7 +297,6 @@ function AppContent() {
             </div>
 
             <div className="tasks-section">
-              <TaskForm onAddTask={handleAddTask} />
               <div className="tasks-list-wrapper">
                 <TaskList
                   tasks={tasks}
@@ -305,6 +304,7 @@ function AppContent() {
                   onSelectTask={handleSelectTask}
                   onDeleteTask={handleDeleteTask}
                   onCompleteTask={handleMarkTaskComplete}
+                  onAddTask={handleAddTask}
                   loading={loading}
                 />
               </div>

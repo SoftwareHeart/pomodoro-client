@@ -11,16 +11,16 @@
 
 .timer-mode {
     display: flex;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
     background: var(--color-panel);
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm);
 }
 
 .timer-mode button {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-xl);
     border: none;
     border-radius: var(--border-radius-md);
     background-color: transparent;
@@ -30,6 +30,7 @@
     font-weight: 500;
     position: relative;
     overflow: hidden;
+    font-size: 1rem;
 }
 
 .timer-mode button::before {
@@ -57,8 +58,8 @@
 
 .timer-container {
     position: relative;
-    width: 300px;
-    height: 300px;
+    width: clamp(280px, 40vmin, 520px);
+    height: clamp(280px, 40vmin, 520px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -91,7 +92,7 @@
 
 .time-display {
     position: relative;
-    font-size: 4rem;
+    font-size: clamp(3rem, 8vmin, 6rem);
     font-weight: bold;
     color: var(--color-primary);
     text-align: center;
@@ -145,14 +146,12 @@
 }
 
 .pomodoro-section {
-    flex: 0 0 auto;
     background-color: var(--color-panel);
     padding: var(--spacing-xl);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-md);
     display: flex;
     flex-direction: column;
-    height: fit-content;
     align-items: center;
     border: 1px solid var(--color-border);
     transition: all var(--transition-normal);

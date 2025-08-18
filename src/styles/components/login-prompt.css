@@ -271,3 +271,31 @@
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-xl);
 }
+
+/* Fill variant */
+.login-prompt-fill {
+    padding: 0;
+}
+
+.login-prompt-fill-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: var(--spacing-lg);
+    width: 100%;
+    height: 100%;
+    padding: var(--spacing-xl);
+}
+
+.login-prompt-fill .login-prompt-card-icon {
+    width: 56px;
+    height: 56px;
+}
+
+.login-prompt-fill-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}

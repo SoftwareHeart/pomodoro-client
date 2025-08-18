@@ -49,6 +49,36 @@
     box-shadow: var(--shadow-sm);
 }
 
+.task-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--border-radius-circle);
+    background: var(--color-panel);
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.icon-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.icon-btn.primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: white;
+    border-color: transparent;
+}
+
 .task-list-toolbar {
     display: flex;
     flex-direction: column;
@@ -57,6 +87,55 @@
     border-bottom: 1px solid var(--color-border);
     background: linear-gradient(to right, var(--color-panel), rgba(var(--color-panel-rgb), 0.95));
     z-index: 2;
+}
+
+.task-list-toolbar.compact {
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+/* Drawer for TaskForm */
+.task-form-drawer-container {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: flex-end;
+    z-index: 999;
+}
+
+.task-form-drawer {
+    width: min(480px, 100%);
+    height: 100%;
+    background: var(--color-panel);
+    border-left: 1px solid var(--color-border);
+    box-shadow: var(--shadow-xl);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.task-form-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.drawer-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-foreground);
+    opacity: 0.7;
+}
+
+.drawer-close-btn:hover {
+    opacity: 1;
 }
 
 .search-container {
@@ -141,8 +220,9 @@
 
 .task-list-scroll-container {
     position: relative;
-    flex: 1;
+    flex: 1 1 auto;
     overflow: hidden;
+    min-height: 0;
 }
 
 .scroll-shadow {
@@ -195,7 +275,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
     border-bottom: 1px solid var(--color-border);
     cursor: pointer;
     transition: all var(--transition-normal);
@@ -248,7 +328,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .task-name {
@@ -277,10 +357,7 @@
 }
 
 .task-meta {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    flex-wrap: wrap;
+    display: none;
 }
 
 .task-duration {
@@ -303,12 +380,7 @@
 }
 
 .date-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    font-size: var(--font-size-sm);
-    color: var(--color-foreground);
-    opacity: 0.7;
+    display: none;
 }
 
 .date-label {
@@ -339,6 +411,63 @@
 
 .date-full:hover {
     background-color: rgba(0, 0, 0, 0.1);
+}
+
+.task-secondary-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.details-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: var(--border-radius-md);
+    background: var(--color-panel);
+    border: 1px solid var(--color-border);
+    color: var(--color-foreground);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.details-btn:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.task-spent-chip {
+    padding: 6px 10px;
+    border-radius: var(--border-radius-md);
+    background: rgba(var(--color-primary-rgb), 0.08);
+    color: var(--color-foreground);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
+    font-weight: 600;
+    font-size: var(--font-size-xs);
+}
+
+.task-details {
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-lg);
+    background: linear-gradient(135deg, var(--color-panel), rgba(var(--color-panel-rgb), 0.95));
+    border: 1px solid var(--color-border);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: 6px 0;
+}
+
+.detail-label {
+    opacity: 0.7;
+    font-size: var(--font-size-sm);
+}
+
+.detail-value {
+    font-weight: 600;
 }
 
 .delete-btn {
@@ -455,10 +584,9 @@
 
 /* PerfectScrollbar özelleştirmeleri */
 .task-scrollbar-container {
-    height: 424.5px !important;
-    /* Sabit yükseklik ver */
-    min-height: 200px !important;
-    max-height: 600px !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
     position: relative;
 }
 

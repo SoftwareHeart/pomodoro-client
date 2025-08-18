@@ -4,15 +4,19 @@ import 'react-perfect-scrollbar/dist/css/styles.css';
 import ConfirmModal from './ConfirmModal';
 import LoginPrompt from './LoginPrompt';
 import { useAuth } from '../contexts/AuthContext';
+import TaskForm from './TaskForm';
 
-function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, activeTaskId, loading }) {
+function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask, activeTaskId, loading }) {
     const [confirmModal, setConfirmModal] = useState({
         isOpen: false,
         taskId: null,
         taskName: ''
     });
     const [searchTerm, setSearchTerm] = useState('');
-    const [filter, setFilter] = useState('all'); // 'all', 'active', 'completed'
+    const [filter, setFilter] = useState('active'); // default to active
+    const [showSearch, setShowSearch] = useState(false);
+    const [showForm, setShowForm] = useState(false);
+    const [expandedTaskIds, setExpandedTaskIds] = useState(new Set());
     const [showTopShadow, setShowTopShadow] = useState(false);
     const [showBottomShadow, setShowBottomShadow] = useState(true);
 
@@ -162,13 +166,30 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, activeTas
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
     };
+    const toggleTaskDetails = (taskKey) => {
+        setExpandedTaskIds(prev => {
+            const next = new Set(prev);
+            if (next.has(taskKey)) next.delete(taskKey); else next.add(taskKey);
+            return next;
+        });
+    };
+
+    const handleAddTaskLocal = async (newTask) => {
+        try {
+            await (onAddTask && onAddTask(newTask));
+            setShowForm(false);
+        } catch (e) {
+            // ignore, TasksContext handles errors
+        }
+    };
+
 
     // Filtreleme değişimi
     const handleFilterChange = (newFilter) => {
         setFilter(newFilter);
     };
 
-    // Kullanıcı giriş yapmamışsa login prompt göster
+    // Kullanıcı giriş yapmamışsa login prompt göster (fill variant)
     if (!isAuthenticated()) {
         return (
             <div className="task-list-container">
@@ -179,6 +200,7 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, activeTas
                     <LoginPrompt
                         message="Görevlerinizi Görüntüleyin"
                         actionText="Görevlerinizi görüntülemek, düzenlemek ve yeni görevler eklemek için giriş yapın veya kayıt olun."
+                        variant="fill"
                     />
                 </div>
             </div>
@@ -190,29 +212,55 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, activeTas
             <div className="task-list">
                 <div className="task-list-header">
                     <h2>Görevler</h2>
-                    <span className="task-count">{filteredTasks.length}/{groupedTasks.length}</span>
+                    <div className="task-header-actions">
+                        <button
+                            className="icon-btn"
+                            title="Görev Ara"
+                            onClick={() => setShowSearch(prev => !prev)}
+                            aria-label="Görev Ara"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                        <button
+                            className="icon-btn primary"
+                            title="Yeni Görev"
+                            onClick={() => setShowForm(true)}
+                            aria-label="Yeni Görev"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                        <span className="task-count">{filteredTasks.length}/{groupedTasks.length}</span>
+                    </div>
                 </div>
 
-                <div className="task-list-toolbar">
-                    <div className="search-container">
-                        <input
-                            type="text"
-                            className="task-search"
-                            placeholder="Görev ara..."
-                            value={searchTerm}
-                            onChange={handleSearchChange}
-                        />
-                        {searchTerm && (
-                            <button
-                                className="clear-search"
-                                onClick={() => setSearchTerm('')}
-                                aria-label="Aramayı Temizle"
-                            >
-                                &times;
-                            </button>
-                        )}
-                    </div>
-
+                {/* Always show filters */}
+                <div className="task-list-toolbar compact">
+                    {showSearch && (
+                        <div className="search-container">
+                            <input
+                                type="text"
+                                className="task-search"
+                                placeholder="Görev ara..."
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                            />
+                            {searchTerm && (
+                                <button
+                                    className="clear-search"
+                                    onClick={() => setSearchTerm('')}
+                                    aria-label="Aramayı Temizle"
+                                >
+                                    &times;
+                                </button>
+                            )}
+                        </div>
+                    )}
                     <div className="task-filters">
                         <button
                             className={filter === 'all' ? 'active' : ''}
@@ -234,6 +282,15 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, activeTas
                         </button>
                     </div>
                 </div>
+
+                {showForm && (
+                    <TaskForm
+                        onAddTask={handleAddTaskLocal}
+                        isOpen={true}
+                        onRequestClose={() => setShowForm(false)}
+                        hideToggle={true}
+                    />
+                )}
 
                 {loading ? (
                     <div className="spinner-container">
@@ -269,10 +326,11 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, activeTas
                         <PerfectScrollbar
                             ref={scrollbarRef}
                             options={{
-                                wheelSpeed: 2,
-                                wheelPropagation: true, // Bu değeri true olarak değiştirin
+                                wheelSpeed: 1,
+                                wheelPropagation: false,
                                 minScrollbarLength: 20,
-                                swipeEasing: true
+                                swipeEasing: true,
+                                suppressScrollX: true
                             }}
                             onScrollY={handleScroll}
                             className="task-scrollbar-container"
@@ -297,54 +355,50 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, activeTas
                                                     </span>
                                                 )}
                                             </div>
-
-                                            <div className="task-meta">
-                                                <span className="task-duration">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <circle cx="12" cy="12" r="10"></circle>
-                                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                            <div className="task-secondary-row">
+                                                <button
+                                                    className="details-btn"
+                                                    onClick={(e) => { e.stopPropagation(); toggleTaskDetails(task.taskName); }}
+                                                    aria-expanded={expandedTaskIds.has(task.taskName)}
+                                                    aria-label="Görev Detayları"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedTaskIds.has(task.taskName) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform var(--transition-normal)' }}>
+                                                        <polyline points="6 9 12 15 18 9"></polyline>
                                                     </svg>
-                                                    {task.duration} dk
-                                                </span>
-                                                {task.totalMinutesSpent != null && (
-                                                    <span className="task-spent" title="Bu görev adında tamamlanan tüm oturumların toplamı">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                            <path d="M3 12h18"></path>
-                                                        </svg>
-                                                        {task.totalMinutesSpent} dk harcandı
+                                                    Detaylar
+                                                </button>
+                                                {typeof task.totalMinutesSpent === 'number' && (
+                                                    <span className="task-spent-chip" title="Bu görev adında tamamlanan tüm oturumların toplamı">
+                                                        {task.totalMinutesSpent} dk
                                                     </span>
                                                 )}
                                             </div>
-
-                                            <div className="task-dates">
-                                                <div className="date-item">
-                                                    <span className="date-label">Eklenme:</span>
-                                                    <div className="date-info">
-                                                        <span className="date-relative">{formatRelativeDate(task.startTime)}</span>
-                                                        <span className="date-full" title={formatDateTime(task.startTime)}>
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                <circle cx="12" cy="12" r="10"></circle>
-                                                                <polyline points="12 6 12 12 16 14"></polyline>
-                                                            </svg>
-                                                        </span>
+                                            {expandedTaskIds.has(task.taskName) && (
+                                                <div className="task-details">
+                                                    <div className="detail-row">
+                                                        <span className="detail-label">Eklenme</span>
+                                                        <span className="detail-value">{formatRelativeDate(task.startTime)}</span>
                                                     </div>
-                                                </div>
-
-                                                {task.isCompleted && task.endTime && (
-                                                    <div className="date-item">
-                                                        <span className="date-label">Tamamlanma:</span>
-                                                        <div className="date-info">
-                                                            <span className="date-relative">{formatRelativeDate(task.endTime)}</span>
-                                                            <span className="date-full" title={formatDateTime(task.endTime)}>
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                                                </svg>
-                                                            </span>
+                                                    {task.isCompleted && task.endTime && (
+                                                        <div className="detail-row">
+                                                            <span className="detail-label">Tamamlanma</span>
+                                                            <span className="detail-value">{formatRelativeDate(task.endTime)}</span>
                                                         </div>
-                                                    </div>
-                                                )}
-                                            </div>
+                                                    )}
+                                                    {typeof task.totalMinutesSpent === 'number' && (
+                                                        <div className="detail-row">
+                                                            <span className="detail-label">Toplam Çalışma</span>
+                                                            <span className="detail-value">{task.totalMinutesSpent} dk</span>
+                                                        </div>
+                                                    )}
+                                                    {Array.isArray(task._items) && (
+                                                        <div className="detail-row">
+                                                            <span className="detail-label">Oturumlar</span>
+                                                            <span className="detail-value">{task._items.length} kayıt</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="task-actions">

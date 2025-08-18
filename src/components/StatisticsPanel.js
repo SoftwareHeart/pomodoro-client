@@ -369,13 +369,14 @@ function StatisticsPanel() {
         fetchAllStats();
     }, [fetchAllStats]);
 
-    // If user is not authenticated, show login prompt
+    // If user is not authenticated, show login prompt (fill variant to occupy container)
     if (!isAuthenticated()) {
         return (
             <div className="statistics-panel modern">
                 <LoginPrompt
                     message="İstatistiklerinizi Görüntüleyin"
                     actionText="Pomodoro istatistiklerinizi takip etmek ve ilerlemenizi görmek için giriş yapın veya kayıt olun."
+                    variant="fill"
                 />
             </div>
         );
