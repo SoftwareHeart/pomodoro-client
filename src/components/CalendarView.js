@@ -252,8 +252,23 @@ function CalendarView() {
                             <line x1="3" y1="10" x2="21" y2="10"></line>
                         </svg>
                     </div>
-                    <h3>Takvim Görüntülemek İçin Giriş Yapın</h3>
-                    <p>Günlük pomodoro geçmişinizi görüntülemek için giriş yapmanız gerekiyor.</p>
+                    <h3>🗓️ Aktivite Takviminizi Keşfedin</h3>
+                    <p>GitHub tarzı aktivite takvimi ile günlük pomodoro geçmişinizi görsel olarak takip edin. Hangi günlerde ne kadar verimli olduğunuzu kolayca görün!</p>
+                    
+                    <div className="calendar-features">
+                        <div className="calendar-feature">
+                            <span className="calendar-feature-icon">📊</span>
+                            <span>Günlük aktivite yoğunluğu</span>
+                        </div>
+                        <div className="calendar-feature">
+                            <span className="calendar-feature-icon">🎯</span>
+                            <span>Detaylı oturum bilgileri</span>
+                        </div>
+                        <div className="calendar-feature">
+                            <span className="calendar-feature-icon">📈</span>
+                            <span>Aylık performans özeti</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
