@@ -45,9 +45,7 @@ function StatisticsPanel() {
         }
     };
 
-    useEffect(() => {
-        fetchAllStats();
-    }, [fetchAllStats]);
+
 
     // If user is not authenticated, show login prompt (fill variant to occupy container)
     if (!isAuthenticated()) {

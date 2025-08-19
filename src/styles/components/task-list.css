@@ -220,9 +220,13 @@
 
 .task-list-scroll-container {
     position: relative;
-    flex: 1 1 auto;
+    flex: 1;
     overflow: hidden;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    /* Mouse wheel scroll özelliği için */
+    cursor: default;
 }
 
 .scroll-shadow {
@@ -248,15 +252,7 @@
             rgba(var(--color-panel-rgb), 0) 100%);
 }
 
-.task-list-items {
-    height: 100%;
-    overflow-y: auto;
-    padding: var(--spacing-xs) 0;
-    margin: 0;
-    list-style: none;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-}
+
 
 .task-list-items::-webkit-scrollbar {
     width: 6px;
@@ -588,48 +584,36 @@
     min-height: 0 !important;
     max-height: none !important;
     position: relative;
-}
-
-/* Scroll konteyneri */
-.task-list-scroll-container {
-    position: relative;
     flex: 1;
-    overflow: visible !important;
-    /* Gölgeler görünebilsin */
     display: flex;
     flex-direction: column;
+    /* Mouse wheel scroll için etkileşim */
+    cursor: default;
+    outline: none;
 }
 
-/* Gölge efektleri */
-.scroll-shadow {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 15px;
-    pointer-events: none;
-    z-index: 5;
-    /* Yüksek bir z-index ile gölgelerin önde görünmesini sağlayın */
+.task-scrollbar-container:hover {
+    /* Hover durumunda scroll bar'ı daha görünür yap */
+    transition: all var(--transition-fast);
 }
 
-.scroll-shadow.top {
-    top: 0;
-    background: linear-gradient(to bottom,
-            rgba(var(--color-panel-rgb), 0.9) 0%,
-            rgba(var(--color-panel-rgb), 0) 100%);
+.task-scrollbar-container:focus-within {
+    /* Focus durumunda da scroll özelliklerini aktifleştir */
+    outline: none;
 }
 
-.scroll-shadow.bottom {
-    bottom: 0;
-    background: linear-gradient(to top,
-            rgba(var(--color-panel-rgb), 0.9) 0%,
-            rgba(var(--color-panel-rgb), 0) 100%);
-}
+
+
+
 
 /* Görev öğeleri listesi için temel stiller */
 .task-list-items {
     margin: 0;
     padding: 0;
     list-style: none;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 /* Görev öğeleri için stiller */
@@ -660,14 +644,25 @@
 .ps__rail-y {
     background-color: transparent !important;
     width: 6px !important;
-    opacity: 0.6 !important;
+    opacity: 0.4 !important;
     z-index: 10 !important;
+    transition: opacity var(--transition-fast) !important;
 }
 
 .ps__thumb-y {
     background-color: rgba(0, 0, 0, 0.3) !important;
     width: 6px !important;
     border-radius: 3px !important;
+    transition: background-color var(--transition-fast) !important;
+}
+
+/* Container hover durumunda scrollbar'ı daha görünür yap */
+.task-scrollbar-container:hover .ps__rail-y {
+    opacity: 0.8 !important;
+}
+
+.task-scrollbar-container:hover .ps__thumb-y {
+    background-color: rgba(0, 0, 0, 0.5) !important;
 }
 
 .ps .ps__rail-x:hover,
@@ -696,4 +691,8 @@
 :root[data-theme="dark"] .ps .ps__rail-y:focus>.ps__thumb-y,
 :root[data-theme="dark"] .ps .ps__rail-y.ps--clicking>.ps__thumb-y {
     background-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+:root[data-theme="dark"] .task-scrollbar-container:hover .ps__thumb-y {
+    background-color: rgba(255, 255, 255, 0.6) !important;
 }

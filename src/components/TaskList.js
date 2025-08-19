@@ -30,6 +30,13 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
         setShowBottomShadow(scrollTop + clientHeight < scrollHeight - 10);
     };
 
+    // Mouse wheel scroll handler - ek güvence için
+    const handleWheel = (e) => {
+        // PerfectScrollbar'ın kendi wheel handling'ini kullanması için
+        // Bu sadece ek bir güvence, genellikle PerfectScrollbar otomatik yapar
+        e.stopPropagation();
+    };
+
     // Görev listesi değiştiğinde alt gölgeyi kontrol et
     useEffect(() => {
         // İçerik boyutları güncellendiğinde bottom shadow kontrolü
@@ -317,7 +324,10 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                         </p>
                     </div>
                 ) : (
-                    <div className="task-list-scroll-container">
+                    <div
+                        className="task-list-scroll-container"
+                        onWheel={handleWheel}
+                    >
                         {/* Gölge efektleri */}
                         {showTopShadow && <div className="scroll-shadow top"></div>}
                         {showBottomShadow && <div className="scroll-shadow bottom"></div>}
@@ -326,11 +336,13 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                         <PerfectScrollbar
                             ref={scrollbarRef}
                             options={{
-                                wheelSpeed: 1,
-                                wheelPropagation: false,
+                                wheelSpeed: 2,
+                                wheelPropagation: true,
                                 minScrollbarLength: 20,
                                 swipeEasing: true,
-                                suppressScrollX: true
+                                suppressScrollX: true,
+                                useBothWheelAxes: false,
+                                scrollingThreshold: 1000
                             }}
                             onScrollY={handleScroll}
                             className="task-scrollbar-container"
