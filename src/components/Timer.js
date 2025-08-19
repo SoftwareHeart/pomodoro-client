@@ -37,6 +37,7 @@ function Timer({
     // Referanslar
     const workerRef = useRef(null);
     const previousIsActiveRef = useRef(isActive);
+    const isWorkerRunningRef = useRef(false);
 
     // Context
     const { playSound, showVisualNotification, showBrowserNotification } = useNotification();
@@ -99,6 +100,9 @@ function Timer({
             workerRef.current.postMessage({
                 command: 'pause'
             });
+            if (isWorkerRunningRef.current) {
+                isWorkerRunningRef.current = false;
+            }
         }
         setHasStarted(false);
         if (onModeChange) onModeChange();
@@ -193,6 +197,7 @@ function Timer({
 
         // Worker hazır
         setWorkerReady(true);
+        isWorkerRunningRef.current = false;
 
         // Temizlik fonksiyonu
         return () => {
@@ -200,6 +205,7 @@ function Timer({
                 workerRef.current.terminate();
                 workerRef.current = null;
             }
+            isWorkerRunningRef.current = false;
         };
     }, [handleWorkerMessage]);
 
@@ -219,6 +225,7 @@ function Timer({
             setIsCompleting(false); // Tamamlanma durumunu da sıfırla
             setStartTime(null); // Start time'ı sıfırla
             setActualWorkDuration(0); // Gerçek çalışma süresini sıfırla
+            isWorkerRunningRef.current = false;
         }
     }, [resetFlag, pomodoroDuration, mode]); // Now depends on mode as well
 
@@ -234,22 +241,21 @@ function Timer({
                 duration: newDuration * 60
             });
             setTimeLeft(newDuration * 60);
+            isWorkerRunningRef.current = false;
         }
     }, [pomodoroDuration, workerReady, mode]);
 
-    // İsActive değişimlerini yönet
+    // İsActive değişimlerini yönet (yalnızca durum geçişlerinde tetikle)
     useEffect(() => {
         if (!workerRef.current || !workerReady) return;
 
         const wasActive = previousIsActiveRef.current;
-        previousIsActiveRef.current = isActive;
 
-        if (isActive && !isCompleting) { // isCompleting true ise ses çalma
-            // Sadece ilk kez başlatıldığında veya timer sıfırlandıktan sonra tekrar başlatıldığında ses çal
+        // Aktif hale geçişte başlat
+        if (isActive && !wasActive && !isCompleting) {
             if (!hasStarted) {
                 playSound('start');
                 setHasStarted(true);
-                // Pomodoro modunda start time'ı kaydet
                 if (mode === 'pomodoro') {
                     setStartTime(Date.now());
                 }
@@ -259,15 +265,39 @@ function Timer({
                 command: 'start',
                 duration: timeLeft
             });
-        } else {
-            // Daha önce aktifse şimdi duraklat
-            if (wasActive) {
-                workerRef.current.postMessage({
-                    command: 'pause'
-                });
-            }
+            isWorkerRunningRef.current = true;
         }
-    }, [isActive, timeLeft, playSound, workerReady, hasStarted, isCompleting]);
+
+        // Pasife geçişte duraklat
+        if (!isActive && wasActive) {
+            workerRef.current.postMessage({
+                command: 'pause'
+            });
+            isWorkerRunningRef.current = false;
+        }
+
+        // Bir sonraki efekt çalışması için mevcut durumu sakla
+        previousIsActiveRef.current = isActive;
+    }, [isActive, workerReady, isCompleting, hasStarted, playSound, mode, timeLeft]);
+
+    // Worker hazır olduğunda ve zamanlayıcı zaten aktifse başlatmayı garanti altına al
+    useEffect(() => {
+        if (!workerRef.current || !workerReady) return;
+        if (isActive && !isCompleting && !isWorkerRunningRef.current) {
+            if (!hasStarted) {
+                playSound('start');
+                setHasStarted(true);
+                if (mode === 'pomodoro') {
+                    setStartTime(Date.now());
+                }
+            }
+            workerRef.current.postMessage({
+                command: 'start',
+                duration: timeLeft
+            });
+            isWorkerRunningRef.current = true;
+        }
+    }, [workerReady, isActive, isCompleting, hasStarted, playSound, mode, timeLeft]);
 
     // Görsel formatı oluştur
     const minutes = Math.floor(timeLeft / 60);
