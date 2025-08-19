@@ -5,7 +5,7 @@ import { createAuthApiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import LoginPrompt from './LoginPrompt';
 
-function StatisticsPanel() {
+function StatisticsPanel({ refreshKey }) {
     const [activeTab, setActiveTab] = useState('overview');
     const [statistics, setStatistics] = useState(null);
     const [weeklyStats, setWeeklyStats] = useState([]);
@@ -44,6 +44,14 @@ function StatisticsPanel() {
             setLoading(false);
         }
     };
+
+    // Pomodoro tamamlandığında veya manuel tamamlamalarda gelen yenileme anahtarı değiştiğinde otomatik yenile
+    useEffect(() => {
+        if (isAuthenticated()) {
+            fetchStatistics();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshKey, isAuthenticated]);
 
 
 
@@ -189,21 +197,6 @@ function StatisticsPanel() {
 
     return (
         <div className="statistics-panel-redesigned">
-            <div className="stats-hero-section">
-                <div className="stats-hero-content">
-                    <h1 className="stats-title">📈 Pomodoro İstatistikleriniz</h1>
-                    <p className="stats-subtitle">Odaklanma yolculuğunuzdaki ilerlemenizi takip edin</p>
-                </div>
-                <div className="stats-refresh">
-                    <button onClick={fetchStatistics} className="refresh-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="23 4 23 10 17 10"></polyline>
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                        </svg>
-                        Yenile
-                    </button>
-                </div>
-            </div>
 
             <div className="stats-navigation">
                 <button

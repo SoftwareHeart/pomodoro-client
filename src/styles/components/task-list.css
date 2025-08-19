@@ -93,6 +93,44 @@
     padding: var(--spacing-md) var(--spacing-lg);
 }
 
+/* Quick Add inline form */
+.quick-add {
+    display: flex;
+    gap: var(--spacing-sm);
+    width: 100%;
+}
+
+.quick-add-input {
+    flex: 1;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    background: var(--color-panel);
+    color: var(--color-foreground);
+    transition: all var(--transition-fast);
+}
+
+.quick-add-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.quick-add-btn {
+    padding: 0 var(--spacing-md);
+    border-radius: var(--border-radius-lg);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: white;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.quick-add.empty {
+    margin-top: var(--spacing-md);
+    max-width: 420px;
+}
+
 /* Drawer for TaskForm */
 .task-form-drawer-container {
     position: fixed;
@@ -442,12 +480,39 @@
     font-size: var(--font-size-xs);
 }
 
+.task-spent-chip.live {
+    background: rgba(var(--color-accent-rgb), 0.1);
+    border-color: rgba(var(--color-accent-rgb), 0.4);
+}
+
 .task-details {
     margin-top: var(--spacing-sm);
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius-lg);
     background: linear-gradient(135deg, var(--color-panel), rgba(var(--color-panel-rgb), 0.95));
     border: 1px solid var(--color-border);
+}
+
+.task-details.compact {
+    padding: var(--spacing-sm) var(--spacing-sm);
+}
+
+.detail-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: var(--border-radius-md);
+    background: rgba(var(--color-foreground-rgb), 0.04);
+    border: 1px solid var(--color-border);
+    font-size: var(--font-size-xs);
+    color: var(--color-foreground);
 }
 
 .detail-row {
@@ -511,6 +576,8 @@
     max-width: 400px;
     line-height: 1.5;
 }
+
+/* Low content placeholder kaldırıldı */
 
 /* Responsive Media Queries */
 @media (max-width: 768px) {

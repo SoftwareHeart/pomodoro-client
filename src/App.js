@@ -62,7 +62,7 @@ function AppContent() {
   const [resetFlag, setResetFlag] = useState(0);
   const { showVisualNotification } = useNotification();
   const { currentUser, isAuthenticated } = useAuth();
-  const { tasks, loading, error: tasksError, fetchTasks, addTask, deleteTask, completeTask, completeTaskGroup, recordPomodoroForTask } = useTasks();
+  const { tasks, loading, error: tasksError, fetchTasks, addTask, deleteTask, completeTask, recordPomodoroForTask } = useTasks();
 
   // Anonymous timer state - for users who aren't logged in
   const [anonymousTimerDuration, setAnonymousTimerDuration] = useState(25);
@@ -70,6 +70,10 @@ function AppContent() {
 
   // Pomodoro duration state - for authenticated users
   const [pomodoroDuration, setPomodoroDuration] = useState(25);
+  // İstatistik paneli otomatik yenile anahtarı
+  const [statsRefreshKey, setStatsRefreshKey] = useState(0);
+  // Aktif görevde canlı süre için başlangıç damgası
+  const [activeStartAt, setActiveStartAt] = useState(null);
 
   // Sayfa yüklendiğinde ve kullanıcı değiştiğinde görevleri getir
   useEffect(() => {
@@ -118,6 +122,7 @@ function AppContent() {
         3000,
         () => {
           setIsActive(false);
+          setActiveStartAt(null);
           setActiveTaskId(taskId);
           setResetFlag(prev => prev + 1);
         }
@@ -144,33 +149,17 @@ function AppContent() {
     }
   };
 
-  // Görevi manuel tamamla - artık taskName ile grup tamamlama
-  const handleMarkTaskComplete = async (taskName) => {
+  // Görevi manuel tamamla - tekil görev bazında
+  const handleMarkTaskComplete = async (taskId) => {
     if (!isAuthenticated()) return;
 
-    // Bu görev grubu için hiç çalışılmamışsa uyarı ver
-    const groupTasks = tasks.filter(task => task.taskName === taskName);
-    const hasWorked = groupTasks.some(task => task.isCompleted);
-
-    if (!hasWorked) {
-      showVisualNotification(
-        'Bu görev için henüz hiç çalışma yapmadınız. Önce pomodoro başlatın!',
-        'warning',
-        4000
-      );
-      return;
-    }
-
     try {
-      await completeTaskGroup(taskName);
-
-      // Eğer aktif görev bu gruptan biriyse timer'ı durdur
-      const activeTask = tasks.find(task => task.id === activeTaskId);
-      if (activeTask && activeTask.taskName === taskName) {
+      await completeTask(taskId);
+      if (activeTaskId === taskId) {
         setIsActive(false);
       }
-      // Görev listesini yenile
-      await fetchTasks();
+      // İstatistikleri otomatik yenile
+      setStatsRefreshKey(prev => prev + 1);
     } catch (error) {
       // Hata yönetimi TasksContext'te yapılıyor
     }
@@ -186,21 +175,25 @@ function AppContent() {
       }
 
       setIsActive(true);
+      setActiveStartAt(Date.now());
     } else {
       // Anonymous user flow - just start the timer with selected duration
       setIsActive(true);
+      setActiveStartAt(Date.now());
     }
   };
 
   // Timer'ı duraklatma
   const handlePause = () => {
     setIsActive(false);
+    setActiveStartAt(null);
   };
 
   // Timer'ı sıfırlama
   const handleReset = () => {
     setIsActive(false);
     setResetFlag(prev => prev + 1);
+    setActiveStartAt(null);
   };
 
   // Timer tamamlandığında
@@ -218,16 +211,20 @@ function AppContent() {
           await recordPomodoroForTask('Pomodoro Seansı', actualWorkMinutes);
         }
         await fetchTasks();
+        // İstatistikleri otomatik yenile
+        setStatsRefreshKey(prev => prev + 1);
       } catch (error) {
         console.error("Pomodoro kaydedilirken hata:", error);
       }
     }
     setIsActive(false);
+    setActiveStartAt(null);
   };
 
   // Timer mod değiştiğinde çağrılacak fonksiyon
   const handleModeChange = () => {
     setIsActive(false);
+    setActiveStartAt(null);
   };
 
   // Anonymous mode change handler
@@ -315,6 +312,8 @@ function AppContent() {
                 <TaskList
                   tasks={tasks}
                   activeTaskId={activeTaskId}
+                  isTimerActive={isActive}
+                  activeStartAt={activeStartAt}
                   onSelectTask={handleSelectTask}
                   onDeleteTask={handleDeleteTask}
                   onCompleteTask={handleMarkTaskComplete}
@@ -325,7 +324,7 @@ function AppContent() {
             </div>
           </div>
           <div className="bottom-row">
-            <StatisticsPanel />
+            <StatisticsPanel refreshKey={statsRefreshKey} />
           </div>
         </div>
       </main>

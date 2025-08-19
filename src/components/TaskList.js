@@ -4,9 +4,9 @@ import 'react-perfect-scrollbar/dist/css/styles.css';
 import ConfirmModal from './ConfirmModal';
 import LoginPrompt from './LoginPrompt';
 import { useAuth } from '../contexts/AuthContext';
-import TaskForm from './TaskForm';
+// TaskForm modal kaldırıldı; hızlı ekleme satırı kullanılıyor
 
-function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask, activeTaskId, loading }) {
+function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask, activeTaskId, isTimerActive, activeStartAt, loading }) {
     const [confirmModal, setConfirmModal] = useState({
         isOpen: false,
         taskId: null,
@@ -15,13 +15,18 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('active'); // default to active
     const [showSearch, setShowSearch] = useState(false);
-    const [showForm, setShowForm] = useState(false);
+    // Modal form kaldırıldı
     const [expandedTaskIds, setExpandedTaskIds] = useState(new Set());
+    const [quickTaskName, setQuickTaskName] = useState('');
+    const [showQuickAdd, setShowQuickAdd] = useState(false);
     const [showTopShadow, setShowTopShadow] = useState(false);
     const [showBottomShadow, setShowBottomShadow] = useState(true);
 
     const scrollbarRef = useRef(null);
+    const quickAddInputRef = useRef(null);
     const { isAuthenticated } = useAuth();
+
+    // Canlı süre göstergesi ve saniyelik tetikleyici kaldırıldı
 
     // Scroll olayını izleme fonksiyonu
     const handleScroll = (e) => {
@@ -120,52 +125,16 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
         return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
     };
 
-    // Görevleri ada göre grupla ve özet kayıt üret
-    const groupedTasks = useMemo(() => {
-        const groups = new Map();
-        (tasks || []).forEach(t => {
-            if (!t || !t.taskName) return;
-            if (!groups.has(t.taskName)) groups.set(t.taskName, []);
-            groups.get(t.taskName).push(t);
-        });
-
-        const aggregated = [];
-        groups.forEach((list, name) => {
-            const sorted = [...list].sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
-            const latest = sorted[0];
-            const totalMinutesSpent = list
-                .filter(x => x.isCompleted)
-                .reduce((sum, x) => sum + (x.duration || 0), 0);
-            const hasAnyCompleted = list.some(x => x.isCompleted);
-            const allCompleted = list.every(x => x.isCompleted);
-
-            aggregated.push({
-                // temsilci kayıt
-                id: latest.id,
-                taskName: name,
-                duration: latest.duration,
-                startTime: latest.startTime,
-                endTime: latest.endTime,
-                isCompleted: allCompleted, // tüm alt görevler tamamlandıysa true
-                // özet alanlar
-                _latest: latest,
-                _items: list,
-                totalMinutesSpent,
-                hasAnyCompleted // en az bir tamamlanmışsa true
-            });
-        });
-
-        // Tamamlanmamışlar üstte, sonra tarihe göre sırala
-        aggregated.sort((a, b) => {
+    // Görevleri tekil olarak listele: Tamamlanmamışlar üstte, sonra tarihe göre sırala
+    const normalizedTasks = useMemo(() => {
+        return [...(tasks || [])].sort((a, b) => {
             if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
             return new Date(b.startTime) - new Date(a.startTime);
         });
-
-        return aggregated;
     }, [tasks]);
 
     // Gösterim için filtre uygula
-    const filteredTasks = groupedTasks.filter(task => {
+    const filteredTasks = normalizedTasks.filter(task => {
         if (filter === 'active' && task.isCompleted) return false;
         if (filter === 'completed' && !task.isCompleted) return false;
         if (searchTerm.trim() === '') return true;
@@ -187,16 +156,98 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
     const handleAddTaskLocal = async (newTask) => {
         try {
             await (onAddTask && onAddTask(newTask));
-            setShowForm(false);
         } catch (e) {
             // ignore, TasksContext handles errors
         }
     };
 
+    const handleQuickAdd = async (e) => {
+        e.preventDefault();
+        const name = quickTaskName.trim();
+        if (!name) return;
+        try {
+            await (onAddTask && onAddTask({ taskName: name, duration: 1, userId: 'defaultUser' }));
+            setQuickTaskName('');
+            setShowQuickAdd(false);
+        } catch (e) { }
+    };
+
+    useEffect(() => {
+        if (showQuickAdd && quickAddInputRef.current) {
+            quickAddInputRef.current.focus();
+        }
+    }, [showQuickAdd]);
+
 
     // Filtreleme değişimi
     const handleFilterChange = (newFilter) => {
         setFilter(newFilter);
+    };
+
+    // Bir görev için harcanan dakika (tamamlanmışsa)
+    const getMinutesSpent = (task) => {
+        if (!task) return null;
+        if (task.isCompleted) {
+            if (typeof task.duration === 'number') return task.duration;
+            if (task.startTime && task.endTime) {
+                const diff = new Date(task.endTime) - new Date(task.startTime);
+                return Math.max(0, Math.round(diff / (1000 * 60)));
+            }
+        }
+        return null;
+    };
+
+    // Süre formatlayıcı (ss:dd veya ss:dd:SS)
+    const formatDuration = (totalSeconds) => {
+        const seconds = Math.max(0, Math.floor(totalSeconds));
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        const mm = String(m).padStart(2, '0');
+        const ss = String(s).padStart(2, '0');
+        if (h > 0) {
+            const hh = String(h).padStart(2, '0');
+            return `${hh}:${mm}:${ss}`;
+        }
+        return `${mm}:${ss}`;
+    };
+
+    // Canlı süre hesaplama kaldırıldı
+
+    const isSameLocalDate = (dateString, referenceDate = new Date()) => {
+        if (!dateString) return false;
+        const d = new Date(dateString);
+        return d.getFullYear() === referenceDate.getFullYear() &&
+            d.getMonth() === referenceDate.getMonth() &&
+            d.getDate() === referenceDate.getDate();
+    };
+
+    // Bugün toplam (saniye) - aynı taskName için tamamlanan seanslar (canlı süre eklenmez)
+    const getTodayTotalSecondsForTaskName = (taskName) => {
+        if (!taskName) return 0;
+        let totalSec = 0;
+        (tasks || []).forEach(t => {
+            if (t && t.taskName === taskName && isSameLocalDate(t.startTime)) {
+                if (t.isCompleted) {
+                    if (typeof t.duration === 'number') totalSec += t.duration * 60;
+                    else if (t.startTime && t.endTime) totalSec += Math.max(0, Math.floor((new Date(t.endTime) - new Date(t.startTime)) / 1000));
+                }
+            }
+        });
+        return totalSec;
+    };
+
+    // Tüm zamanlar toplam (dakika) - aynı taskName için tamamlanan seanslar
+    const getAllTimeTotalMinutesForTaskName = (taskName) => {
+        if (!taskName) return 0;
+        let totalMin = 0;
+        (tasks || []).forEach(t => {
+            if (t && t.taskName === taskName && t.isCompleted) {
+                if (typeof t.duration === 'number') totalMin += t.duration;
+                else if (t.startTime && t.endTime) totalMin += Math.max(0, Math.round((new Date(t.endTime) - new Date(t.startTime)) / (1000 * 60)));
+            }
+        });
+        return totalMin;
     };
 
     // Kullanıcı giriş yapmamışsa login prompt göster (fill variant)
@@ -237,7 +288,7 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                         <button
                             className="icon-btn primary"
                             title="Yeni Görev"
-                            onClick={() => setShowForm(true)}
+                            onClick={() => setShowQuickAdd(true)}
                             aria-label="Yeni Görev"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -245,12 +296,28 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
                         </button>
-                        <span className="task-count">{filteredTasks.length}/{groupedTasks.length}</span>
+                        <span className="task-count">{filteredTasks.length}/{(tasks || []).length}</span>
                     </div>
                 </div>
 
-                {/* Always show filters */}
+                {/* Hızlı görev ekleme ve filtreler */}
                 <div className="task-list-toolbar compact">
+                    {showQuickAdd && (
+                        <form className="quick-add" onSubmit={handleQuickAdd}>
+                            <input
+                                type="text"
+                                className="quick-add-input"
+                                placeholder="Hızlı görev ekle..."
+                                value={quickTaskName}
+                                onChange={(e) => setQuickTaskName(e.target.value)}
+                                ref={quickAddInputRef}
+                                aria-label="Hızlı görev ekle"
+                            />
+                            <button className="quick-add-btn" type="submit" disabled={!quickTaskName.trim()}>
+                                Ekle
+                            </button>
+                        </form>
+                    )}
                     {showSearch && (
                         <div className="search-container">
                             <input
@@ -293,15 +360,6 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                     </div>
                 </div>
 
-                {showForm && (
-                    <TaskForm
-                        onAddTask={handleAddTaskLocal}
-                        isOpen={true}
-                        onRequestClose={() => setShowForm(false)}
-                        hideToggle={true}
-                    />
-                )}
-
                 {loading ? (
                     <div className="spinner-container">
                         <div className="spinner"></div>
@@ -325,6 +383,7 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                                     `${filter === 'active' ? 'Aktif' : 'Tamamlanan'} görev bulunamadı.` :
                                     "Henüz görev eklenmemiş."}
                         </p>
+                        {/* Boş durumda artık inline quick-add yok; üstteki + ile açılıyor */}
                     </div>
                 ) : (
                     <div
@@ -353,7 +412,7 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                             <ul className="task-list-items">
                                 {filteredTasks.map(task => (
                                     <li
-                                        key={task.taskName}
+                                        key={task.id}
                                         className={`task-item ${task.id === activeTaskId ? 'active' : ''} ${task.isCompleted ? 'completed' : ''}`}
                                         onClick={() => onSelectTask(task.id)}
                                     >
@@ -373,45 +432,60 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                                             <div className="task-secondary-row">
                                                 <button
                                                     className="details-btn"
-                                                    onClick={(e) => { e.stopPropagation(); toggleTaskDetails(task.taskName); }}
-                                                    aria-expanded={expandedTaskIds.has(task.taskName)}
+                                                    onClick={(e) => { e.stopPropagation(); toggleTaskDetails(task.id); }}
+                                                    aria-expanded={expandedTaskIds.has(task.id)}
                                                     aria-label="Görev Detayları"
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedTaskIds.has(task.taskName) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform var(--transition-normal)' }}>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedTaskIds.has(task.id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform var(--transition-normal)' }}>
                                                         <polyline points="6 9 12 15 18 9"></polyline>
                                                     </svg>
                                                     Detaylar
                                                 </button>
-                                                {typeof task.totalMinutesSpent === 'number' && (
-                                                    <span className="task-spent-chip" title="Bu görev adında tamamlanan tüm pomodoro seanslarının toplam süresi">
-                                                        {task.totalMinutesSpent} dk
+                                                {task.isCompleted ? (
+                                                    <span className="task-spent-chip" title="Toplam çalışma süresi">
+                                                        Toplam: {getAllTimeTotalMinutesForTaskName(task.taskName)} dk
+                                                    </span>
+                                                ) : (
+                                                    <span className="task-spent-chip" title="Bugünkü toplam çalışma">
+                                                        Bugün: {formatDuration(getTodayTotalSecondsForTaskName(task.taskName))}
                                                     </span>
                                                 )}
                                             </div>
-                                            {expandedTaskIds.has(task.taskName) && (
-                                                <div className="task-details">
-                                                    <div className="detail-row">
-                                                        <span className="detail-label">Eklenme</span>
-                                                        <span className="detail-value">{formatRelativeDate(task.startTime)}</span>
+                                            {expandedTaskIds.has(task.id) && (
+                                                <div className="task-details compact">
+                                                    <div className="detail-chips">
+                                                        <span className="chip" title="Eklenme">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <circle cx="12" cy="12" r="10"></circle>
+                                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                                            </svg>
+                                                            {formatRelativeDate(task.startTime)}
+                                                        </span>
+                                                        {task.isCompleted && task.endTime && (
+                                                            <span className="chip" title="Tamamlanma">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                                </svg>
+                                                                {formatRelativeDate(task.endTime)}
+                                                            </span>
+                                                        )}
+                                                        {getMinutesSpent(task) !== null && (
+                                                            <span className="chip" title="Harcanan Süre">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                                </svg>
+                                                                {getMinutesSpent(task)} dk
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                    {task.isCompleted && task.endTime && (
-                                                        <div className="detail-row">
-                                                            <span className="detail-label">Tamamlanma</span>
-                                                            <span className="detail-value">{formatRelativeDate(task.endTime)}</span>
-                                                        </div>
-                                                    )}
-                                                    {typeof task.totalMinutesSpent === 'number' && (
-                                                        <div className="detail-row">
-                                                            <span className="detail-label">Toplam Pomodoro Süresi</span>
-                                                            <span className="detail-value">{task.totalMinutesSpent} dk</span>
-                                                        </div>
-                                                    )}
-                                                    {Array.isArray(task._items) && (
-                                                        <div className="detail-row">
-                                                            <span className="detail-label">Pomodoro Seansları</span>
-                                                            <span className="detail-value">{task._items.length} seans</span>
-                                                        </div>
-                                                    )}
+                                                    <div className="detail-chips">
+                                                        <span className="chip" title="Tüm zamanlar toplam">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <circle cx="12" cy="12" r="10"></circle>
+                                                            </svg>
+                                                            Toplam: {getAllTimeTotalMinutesForTaskName(task.taskName)} dk
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -422,7 +496,7 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                                                     className="complete-btn"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        onCompleteTask && onCompleteTask(task.taskName);
+                                                        onCompleteTask && onCompleteTask(task.id);
                                                     }}
                                                     aria-label="Görevi Tamamla"
                                                 >

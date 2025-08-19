@@ -24,7 +24,6 @@ function Timer({
 
     // Pomodoro duration state (sadece pomodoro modu için)
     const [pomodoroDuration, setPomodoroDuration] = useState(duration);
-    const [customDuration, setCustomDuration] = useState(false);
 
     // Çalışma süresi takibi
     const [startTime, setStartTime] = useState(null);
@@ -53,21 +52,7 @@ function Timer({
         }
     };
 
-    const incrementDuration = () => {
-        const newValue = Math.min(pomodoroDuration + 1, 120);
-        setPomodoroDuration(newValue);
-        if (onDurationChange) {
-            onDurationChange(newValue);
-        }
-    };
-
-    const decrementDuration = () => {
-        const newValue = Math.max(pomodoroDuration - 1, 1);
-        setPomodoroDuration(newValue);
-        if (onDurationChange) {
-            onDurationChange(newValue);
-        }
-    };
+    // Eski hızlı buton/toggle kaldırıldı, slider ile kontrol ediliyor
 
     // Sync mode state with currentMode prop (for anonymous users)
     useEffect(() => {
@@ -292,6 +277,11 @@ function Timer({
             LONG_BREAK_DURATION * 60;
     const progress = ((totalSeconds - timeLeft) / totalSeconds) * 100;
 
+    // Slider konum yüzdesi (1-120 dk aralığı)
+    const minMinutes = 1;
+    const maxMinutes = 120;
+    const sliderPercent = ((pomodoroDuration - minMinutes) / (maxMinutes - minMinutes)) * 100;
+
 
 
     return (
@@ -328,64 +318,32 @@ function Timer({
                 </div>
             </div>
 
-            {/* Minimal Pomodoro Duration Selector - Sadece pomodoro modu için göster */}
+            {/* Modern Pomodoro Süre Seçici - sadece pomodoro modunda */}
             {mode === 'pomodoro' && (
-                <div className="duration-selector-compact">
-                    <div className="duration-quick-buttons">
-                        {[15, 25, 45, 60].map((minutes) => (
-                            <button
-                                key={minutes}
-                                className={`duration-quick-btn ${pomodoroDuration === minutes ? 'active' : ''}`}
-                                onClick={() => {
-                                    setPomodoroDuration(minutes);
-                                    setCustomDuration(false);
-                                    if (onDurationChange) {
-                                        onDurationChange(minutes);
-                                    }
-                                }}
-                                title={`${minutes} dakika`}
-                            >
-                                {minutes}dk
-                            </button>
-                        ))}
-                        <button
-                            className={`duration-quick-btn custom ${customDuration ? 'active' : ''}`}
-                            onClick={() => setCustomDuration(!customDuration)}
-                            title="Özel süre"
+                <div className="duration-selector-modern">
+                    <div className="duration-header">
+                        <span className="duration-label">Süre</span>
+                        <span
+                            className="duration-bubble"
+                            style={{ left: `calc(${sliderPercent}% - 22px)` }}
+                            aria-live="polite"
                         >
-                            Özel
-                        </button>
+                            {pomodoroDuration}dk
+                        </span>
                     </div>
-
-                    {customDuration && (
-                        <div className="custom-duration-compact">
-                            <button
-                                type="button"
-                                className="duration-btn-compact"
-                                onClick={decrementDuration}
-                                disabled={pomodoroDuration <= 1}
-                            >
-                                -
-                            </button>
-                            <input
-                                type="number"
-                                value={pomodoroDuration}
-                                onChange={handleCustomDurationChange}
-                                min="1"
-                                max="120"
-                                className="duration-input-compact"
-                            />
-                            <span className="duration-unit-compact">dk</span>
-                            <button
-                                type="button"
-                                className="duration-btn-compact"
-                                onClick={incrementDuration}
-                                disabled={pomodoroDuration >= 120}
-                            >
-                                +
-                            </button>
-                        </div>
-                    )}
+                    <input
+                        type="range"
+                        min={minMinutes}
+                        max={maxMinutes}
+                        step={1}
+                        value={pomodoroDuration}
+                        onChange={handleCustomDurationChange}
+                        className="duration-range"
+                        style={{
+                            background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${sliderPercent}%, var(--color-border) ${sliderPercent}%, var(--color-border) 100%)`
+                        }}
+                        aria-label="Pomodoro süresini dakika olarak ayarlayın"
+                    />
                 </div>
             )}
             <ConfirmModal
