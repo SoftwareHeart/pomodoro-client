@@ -23,6 +23,7 @@ import Header from './components/Header';
 
 // Import the CSS files
 import './styles/components/login-prompt.css';
+import './styles/components/statistics-redesigned.css';
 
 // Ana uygulama bileşeni - Provider'ları burada oluşturuyoruz
 function App() {
@@ -58,15 +59,17 @@ function AppContent() {
   // State değişkenleri
   const [activeTaskId, setActiveTaskId] = useState(null);
   const [isActive, setIsActive] = useState(false);
-  const [currentSession, setCurrentSession] = useState(null);
   const [resetFlag, setResetFlag] = useState(0);
   const { showVisualNotification } = useNotification();
   const { currentUser, isAuthenticated } = useAuth();
-  const { tasks, loading, error: tasksError, fetchTasks, addTask, deleteTask, completeTask, recordPomodoroForTask } = useTasks();
+  const { tasks, loading, error: tasksError, fetchTasks, addTask, deleteTask, completeTask, completeTaskGroup, recordPomodoroForTask } = useTasks();
 
   // Anonymous timer state - for users who aren't logged in
   const [anonymousTimerDuration, setAnonymousTimerDuration] = useState(25);
   const [anonymousMode, setAnonymousMode] = useState('pomodoro'); // 'pomodoro', 'shortBreak', 'longBreak'
+
+  // Pomodoro duration state - for authenticated users
+  const [pomodoroDuration, setPomodoroDuration] = useState(25);
 
   // Sayfa yüklendiğinde ve kullanıcı değiştiğinde görevleri getir
   useEffect(() => {
@@ -107,21 +110,6 @@ function AppContent() {
 
     const selectedTask = tasks.find(task => task.id === taskId);
 
-    // Eğer seçilen görev tamamlanmışsa uyarı göster
-    if (selectedTask.isCompleted) {
-      showVisualNotification(
-        'Bu görev tamamlanmış. Tekrar başlatmak için tıklayın.',
-        'info',
-        3000,
-        () => {
-          setActiveTaskId(taskId);
-          setCurrentSession(selectedTask);
-          setResetFlag(prev => prev + 1);
-        }
-      );
-      return;
-    }
-
     // Eğer zamanlayıcı çalışıyorsa ve farklı bir görev seçilmeye çalışılıyorsa
     if (isActive && activeTaskId !== taskId) {
       showVisualNotification(
@@ -131,7 +119,6 @@ function AppContent() {
         () => {
           setIsActive(false);
           setActiveTaskId(taskId);
-          setCurrentSession(selectedTask);
           setResetFlag(prev => prev + 1);
         }
       );
@@ -140,7 +127,6 @@ function AppContent() {
 
     // Zamanlayıcı çalışmıyorsa doğrudan görev değiştir
     setActiveTaskId(taskId);
-    setCurrentSession(selectedTask);
     setResetFlag(prev => prev + 1);
   };
 
@@ -152,21 +138,39 @@ function AppContent() {
       if (activeTaskId === taskId) {
         setActiveTaskId(null);
         setIsActive(false);
-        setCurrentSession(null);
       }
     } catch (error) {
       // Hata yönetimi TasksContext'te yapılıyor
     }
   };
 
-  // Görevi manuel tamamla
-  const handleMarkTaskComplete = async (taskId) => {
+  // Görevi manuel tamamla - artık taskName ile grup tamamlama
+  const handleMarkTaskComplete = async (taskName) => {
     if (!isAuthenticated()) return;
+
+    // Bu görev grubu için hiç çalışılmamışsa uyarı ver
+    const groupTasks = tasks.filter(task => task.taskName === taskName);
+    const hasWorked = groupTasks.some(task => task.isCompleted);
+
+    if (!hasWorked) {
+      showVisualNotification(
+        'Bu görev için henüz hiç çalışma yapmadınız. Önce pomodoro başlatın!',
+        'warning',
+        4000
+      );
+      return;
+    }
+
     try {
-      await completeTask(taskId);
-      if (activeTaskId === taskId) {
+      await completeTaskGroup(taskName);
+
+      // Eğer aktif görev bu gruptan biriyse timer'ı durdur
+      const activeTask = tasks.find(task => task.id === activeTaskId);
+      if (activeTask && activeTask.taskName === taskName) {
         setIsActive(false);
       }
+      // Görev listesini yenile
+      await fetchTasks();
     } catch (error) {
       // Hata yönetimi TasksContext'te yapılıyor
     }
@@ -182,8 +186,6 @@ function AppContent() {
       }
 
       setIsActive(true);
-      const selectedTask = tasks.find(task => task.id === activeTaskId);
-      setCurrentSession(selectedTask);
     } else {
       // Anonymous user flow - just start the timer with selected duration
       setIsActive(true);
@@ -202,14 +204,22 @@ function AppContent() {
   };
 
   // Timer tamamlandığında
-  const handleComplete = async () => {
-    // Oturum bittiğinde istatistiklere kayıt at (görev tamamlanmadan)
-    if (isAuthenticated() && currentSession) {
+  const handleComplete = async (actualWorkMinutes = null) => {
+    // Pomodoro modu ve gerçek çalışma süresi varsa kaydet (minimum süre kısıtlaması yok)
+    if (isAuthenticated() && actualWorkMinutes) {
       try {
-        await recordPomodoroForTask(currentSession.taskName, currentSession.duration);
+        if (activeTaskId) {
+          const activeTask = tasks.find(task => task.id === activeTaskId);
+          const taskName = activeTask ? activeTask.taskName : 'Pomodoro Seansı';
+          // Gerçek çalışma süresini kullan
+          await recordPomodoroForTask(taskName, actualWorkMinutes);
+        } else {
+          // Aktif görev yoksa genel pomodoro seansı kaydet
+          await recordPomodoroForTask('Pomodoro Seansı', actualWorkMinutes);
+        }
         await fetchTasks();
       } catch (error) {
-        // Görsel bir uyarı eklemek istenirse burada yapılabilir
+        console.error("Pomodoro kaydedilirken hata:", error);
       }
     }
     setIsActive(false);
@@ -236,10 +246,8 @@ function AppContent() {
     setResetFlag(prev => prev + 1);
   };
 
-  // Aktif görevin süresini bul
-  const activeDuration = isAuthenticated() ?
-    (activeTaskId ? tasks.find(task => task.id === activeTaskId)?.duration || 25 : 25) :
-    anonymousTimerDuration;
+  // Aktif görevin süresini bul - artık pomodoro süresi olarak kullanılacak
+  const activeDuration = isAuthenticated() ? pomodoroDuration : anonymousTimerDuration;
 
   // Current timer mode (for anonymous users)
   const currentMode = isAuthenticated() ? undefined : anonymousMode;
@@ -279,6 +287,7 @@ function AppContent() {
                 currentMode={currentMode}
                 onAnonymousModeChange={handleAnonymousModeChange}
                 isAuthenticated={isAuthenticated()}
+                onDurationChange={isAuthenticated() ? setPomodoroDuration : setAnonymousTimerDuration}
               />
 
               <PomodoroControls
@@ -289,9 +298,14 @@ function AppContent() {
               />
 
               {isAuthenticated() && activeTaskId && (
-                <div className="active-task">
-                  <h3>Aktif Görev:</h3>
-                  <p>{tasks.find(task => task.id === activeTaskId)?.taskName}</p>
+                <div className="active-task-minimal">
+                  <div className="active-task-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                  </div>
+                  <span className="active-task-text">{tasks.find(task => task.id === activeTaskId)?.taskName}</span>
                 </div>
               )}
             </div>

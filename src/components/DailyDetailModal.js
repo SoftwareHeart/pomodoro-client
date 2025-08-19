@@ -152,7 +152,7 @@ function DailyDetailModal({ isOpen, onClose, selectedDate }) {
                                     </div>
                                     <div className="summary-info">
                                         <span className="summary-value">{Math.round(dailyData.totalMinutes / 60 * 10) / 10}s</span>
-                                        <span className="summary-label">Toplam Süre</span>
+                                        <span className="summary-label">Toplam Odaklanma Süresi</span>
                                     </div>
                                 </div>
 

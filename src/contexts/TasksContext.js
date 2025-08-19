@@ -97,6 +97,37 @@ export function TasksProvider({ children }) {
         }
     }, [authApiService]);
 
+    // Görev grubundaki tamamlanmamış tüm görevleri tamamla
+    const completeTaskGroup = useCallback(async (taskName) => {
+        try {
+            // Bu isme sahip tamamlanmamış görevleri bul
+            const incompleteTasks = tasks.filter(task =>
+                task.taskName === taskName && !task.isCompleted
+            );
+
+            if (incompleteTasks.length === 0) {
+                throw new Error("Tamamlanacak görev bulunamadı");
+            }
+
+            // Tüm tamamlanmamış görevleri tamamla
+            await Promise.all(
+                incompleteTasks.map(task => authApiService.completeSession(task.id))
+            );
+
+            // Local state'i güncelle
+            setTasks(prev => prev.map(task =>
+                task.taskName === taskName && !task.isCompleted
+                    ? { ...task, isCompleted: true, endTime: new Date().toISOString() }
+                    : task
+            ));
+
+        } catch (error) {
+            console.error("Görev grubu tamamlanırken hata oluştu:", error);
+            setError("Görev grubu tamamlanırken bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
+            throw error;
+        }
+    }, [authApiService, tasks]);
+
     // Timer tamamlandığında istatistiklere işlenecek arka plan oturumu oluştur
     // Not: tasks state'ini kirletmemek için yeni oluşturulan ve tamamlanan oturumu listeye eklemiyoruz
     const recordPomodoroForTask = useCallback(async (taskName, duration) => {
@@ -119,8 +150,9 @@ export function TasksProvider({ children }) {
         addTask,
         deleteTask,
         completeTask,
+        completeTaskGroup,
         recordPomodoroForTask
-    }), [tasks, loading, error, fetchTasks, addTask, deleteTask, completeTask, recordPomodoroForTask]);
+    }), [tasks, loading, error, fetchTasks, addTask, deleteTask, completeTask, completeTaskGroup, recordPomodoroForTask]);
 
     return (
         <TasksContext.Provider value={value}>

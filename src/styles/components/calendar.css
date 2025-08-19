@@ -9,6 +9,30 @@
     transition: all var(--transition-normal);
     max-width: 900px;
     width: 100%;
+    overflow: hidden;
+    /* İçerik taşmasını engelle */
+}
+
+/* Calendar Content Transition Animasyonları */
+.calendar-content {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.calendar-content.transitioning.slide-left {
+    opacity: 0;
+    transform: translateX(-30px);
+}
+
+.calendar-content.transitioning.slide-right {
+    opacity: 0;
+    transform: translateX(30px);
+}
+
+.calendar-content.transitioning.fade {
+    opacity: 0;
+    transform: scale(0.98);
 }
 
 .calendar-container:hover {
@@ -90,7 +114,7 @@
 }
 
 .today-btn:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
 }
@@ -434,9 +458,9 @@
     text-align: center;
     padding: var(--spacing-xl);
     min-height: 300px;
-    background: linear-gradient(135deg, 
-        rgba(var(--color-primary-rgb), 0.03), 
-        rgba(var(--color-secondary-rgb), 0.03));
+    background: linear-gradient(135deg,
+            rgba(var(--color-primary-rgb), 0.03),
+            rgba(var(--color-secondary-rgb), 0.03));
     border-radius: var(--border-radius-lg);
     border: 1px solid rgba(var(--color-primary-rgb), 0.1);
 }
@@ -480,9 +504,9 @@
     align-items: center;
     gap: var(--spacing-md);
     padding: var(--spacing-md);
-    background: linear-gradient(135deg, 
-        rgba(var(--color-panel-rgb), 0.8), 
-        rgba(var(--color-panel-rgb), 0.6));
+    background: linear-gradient(135deg,
+            rgba(var(--color-panel-rgb), 0.8),
+            rgba(var(--color-panel-rgb), 0.6));
     border-radius: var(--border-radius-md);
     border: 1px solid var(--color-border);
     transition: all var(--transition-normal);

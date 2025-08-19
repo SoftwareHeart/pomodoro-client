@@ -11,6 +11,8 @@ function CalendarView() {
     const [error, setError] = useState(null);
     const [selectedDate, setSelectedDate] = useState(null);
     const [showDailyDetail, setShowDailyDetail] = useState(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const [transitionDirection, setTransitionDirection] = useState('');
     const { getAuthHeader, isAuthenticated } = useAuth();
 
     const authApiService = useMemo(() => {
@@ -113,28 +115,64 @@ function CalendarView() {
 
     // Önceki ay
     const goToPreviousMonth = () => {
-        setCurrentDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setMonth(prev.getMonth() - 1);
-            return newDate;
-        });
-        setCalendarData({}); // Takvim verisini temizle
+        if (isTransitioning) return; // Transition sırasında tıklamayı engelle
+
+        setIsTransitioning(true);
+        setTransitionDirection('slide-left');
+
+        setTimeout(() => {
+            setCurrentDate(prev => {
+                const newDate = new Date(prev);
+                newDate.setMonth(prev.getMonth() - 1);
+                return newDate;
+            });
+            setCalendarData({}); // Takvim verisini temizle
+
+            setTimeout(() => {
+                setIsTransitioning(false);
+                setTransitionDirection('');
+            }, 150); // Animation süresi
+        }, 150);
     };
 
     // Sonraki ay
     const goToNextMonth = () => {
-        setCurrentDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setMonth(prev.getMonth() + 1);
-            return newDate;
-        });
-        setCalendarData({}); // Takvim verisini temizle
+        if (isTransitioning) return; // Transition sırasında tıklamayı engelle
+
+        setIsTransitioning(true);
+        setTransitionDirection('slide-right');
+
+        setTimeout(() => {
+            setCurrentDate(prev => {
+                const newDate = new Date(prev);
+                newDate.setMonth(prev.getMonth() + 1);
+                return newDate;
+            });
+            setCalendarData({}); // Takvim verisini temizle
+
+            setTimeout(() => {
+                setIsTransitioning(false);
+                setTransitionDirection('');
+            }, 150); // Animation süresi
+        }, 150);
     };
 
     // Bugüne git
     const goToToday = () => {
-        setCurrentDate(new Date());
-        setCalendarData({}); // Takvim verisini temizle
+        if (isTransitioning) return; // Transition sırasında tıklamayı engelle
+
+        setIsTransitioning(true);
+        setTransitionDirection('fade');
+
+        setTimeout(() => {
+            setCurrentDate(new Date());
+            setCalendarData({}); // Takvim verisini temizle
+
+            setTimeout(() => {
+                setIsTransitioning(false);
+                setTransitionDirection('');
+            }, 150); // Animation süresi
+        }, 150);
     };
 
     // Günlük detay modal'ını aç
@@ -254,7 +292,7 @@ function CalendarView() {
                     </div>
                     <h3>🗓️ Aktivite Takviminizi Keşfedin</h3>
                     <p>GitHub tarzı aktivite takvimi ile günlük pomodoro geçmişinizi görsel olarak takip edin. Hangi günlerde ne kadar verimli olduğunuzu kolayca görün!</p>
-                    
+
                     <div className="calendar-features">
                         <div className="calendar-feature">
                             <span className="calendar-feature-icon">📊</span>
@@ -282,6 +320,7 @@ function CalendarView() {
                         className="calendar-nav-btn"
                         onClick={goToPreviousMonth}
                         title="Önceki Ay"
+                        disabled={isTransitioning}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="15 18 9 12 15 6"></polyline>
@@ -294,6 +333,7 @@ function CalendarView() {
                             className="today-btn"
                             onClick={goToToday}
                             title="Bugüne Git"
+                            disabled={isTransitioning}
                         >
                             Bugün
                         </button>
@@ -303,6 +343,7 @@ function CalendarView() {
                         className="calendar-nav-btn"
                         onClick={goToNextMonth}
                         title="Sonraki Ay"
+                        disabled={isTransitioning}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="9 18 15 12 9 6"></polyline>
@@ -341,7 +382,7 @@ function CalendarView() {
                     <button onClick={fetchCalendarData}>Tekrar Dene</button>
                 </div>
             ) : (
-                <>
+                <div className={`calendar-content ${isTransitioning ? `transitioning ${transitionDirection}` : ''}`}>
                     <div className="calendar-grid">
                         <div className="calendar-weekdays">
                             {dayNames.map(day => (
@@ -366,7 +407,7 @@ function CalendarView() {
                         </div>
                         <span className="legend-label">Çok</span>
                     </div>
-                </>
+                </div>
             )}
 
             {/* Günlük Detay Modal */}

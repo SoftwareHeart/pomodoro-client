@@ -61,9 +61,9 @@ const apiService = {
     },
 
     // İstatistikleri getir
-    getStatistics: async (userId = "defaultUser") => {
+    getStatistics: async () => {
         try {
-            const response = await axios.get(`${API_URL}/Pomodoro/statistics?userId=${userId}`);
+            const response = await axios.get(`${API_URL}/Pomodoro/statistics`);
             return response.data;
         } catch (error) {
             console.error('Error fetching statistics:', error);
@@ -72,9 +72,9 @@ const apiService = {
     },
 
     // Haftalık istatistikleri getir
-    getWeeklyStats: async (userId = "defaultUser") => {
+    getWeeklyStats: async () => {
         try {
-            const response = await axios.get(`${API_URL}/Pomodoro/weekly-stats?userId=${userId}`);
+            const response = await axios.get(`${API_URL}/Pomodoro/weekly-stats`);
             return response.data;
         } catch (error) {
             console.error('Error fetching weekly stats:', error);
@@ -162,9 +162,9 @@ export const createAuthApiService = (getAuthHeader) => {
         },
 
         // İstatistikleri getir (yetkilendirilmiş)
-        getStatistics: async (userId = "defaultUser") => {
+        getStatistics: async () => {
             try {
-                const response = await axiosInstance.get(`/Pomodoro/statistics?userId=${userId}`);
+                const response = await axiosInstance.get(`/Pomodoro/statistics`);
                 return response.data;
             } catch (error) {
                 console.error('Error fetching statistics:', error);
@@ -173,9 +173,9 @@ export const createAuthApiService = (getAuthHeader) => {
         },
 
         // Haftalık istatistikleri getir (yetkilendirilmiş)
-        getWeeklyStats: async (userId = "defaultUser") => {
+        getWeeklyStats: async () => {
             try {
-                const response = await axiosInstance.get(`/Pomodoro/weekly-stats?userId=${userId}`);
+                const response = await axiosInstance.get(`/Pomodoro/weekly-stats`);
                 return response.data;
             } catch (error) {
                 console.error('Error fetching weekly stats:', error);

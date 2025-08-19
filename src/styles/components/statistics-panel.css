@@ -1,3 +1,35 @@
+/* Enhanced Statistics Cards */
+.stat-sublabel {
+    font-size: var(--font-size-xs);
+    color: var(--color-foreground);
+    opacity: 0.6;
+    margin-top: var(--spacing-xs);
+    line-height: 1.3;
+}
+
+.stat-icon.pomodoro-icon {
+    color: var(--color-primary);
+}
+
+.stat-icon.focus-icon {
+    color: var(--color-accent);
+}
+
+.stat-icon.task-icon {
+    color: #2ecc71;
+}
+
+.stat-icon.trend-icon {
+    color: #9b59b6;
+}
+
+.stat-card.highlight {
+    background: linear-gradient(135deg,
+            rgba(var(--color-primary-rgb), 0.1),
+            rgba(var(--color-primary-rgb), 0.05));
+    border: 2px solid rgba(var(--color-primary-rgb), 0.2);
+}
+
 .heatmap-container {
     padding: 20px;
     background: var(--color-panel);

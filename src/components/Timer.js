@@ -10,7 +10,8 @@ function Timer({
     onModeChange,
     currentMode,
     onAnonymousModeChange,
-    isAuthenticated
+    isAuthenticated,
+    onDurationChange
 }) {
     // State değişkenleri
     const [timeLeft, setTimeLeft] = useState(duration * 60);
@@ -20,6 +21,14 @@ function Timer({
     const [mode, setMode] = useState(currentMode || 'pomodoro'); // 'pomodoro', 'shortBreak', 'longBreak'
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingMode, setPendingMode] = useState(null);
+
+    // Pomodoro duration state (sadece pomodoro modu için)
+    const [pomodoroDuration, setPomodoroDuration] = useState(duration);
+    const [customDuration, setCustomDuration] = useState(false);
+
+    // Çalışma süresi takibi
+    const [startTime, setStartTime] = useState(null);
+    const [actualWorkDuration, setActualWorkDuration] = useState(0);
 
     // Sabit değerler
     const SHORT_BREAK_DURATION = 5; // 5 dakika
@@ -33,12 +42,44 @@ function Timer({
     // Context
     const { playSound, showVisualNotification, showBrowserNotification } = useNotification();
 
+
+
+    const handleCustomDurationChange = (e) => {
+        let value = Math.max(1, parseInt(e.target.value) || 1);
+        value = Math.min(value, 120);
+        setPomodoroDuration(value);
+        if (onDurationChange) {
+            onDurationChange(value);
+        }
+    };
+
+    const incrementDuration = () => {
+        const newValue = Math.min(pomodoroDuration + 1, 120);
+        setPomodoroDuration(newValue);
+        if (onDurationChange) {
+            onDurationChange(newValue);
+        }
+    };
+
+    const decrementDuration = () => {
+        const newValue = Math.max(pomodoroDuration - 1, 1);
+        setPomodoroDuration(newValue);
+        if (onDurationChange) {
+            onDurationChange(newValue);
+        }
+    };
+
     // Sync mode state with currentMode prop (for anonymous users)
     useEffect(() => {
         if (currentMode && mode !== currentMode) {
             setMode(currentMode);
         }
     }, [currentMode, mode]);
+
+    // Sync pomodoroDuration with duration prop
+    useEffect(() => {
+        setPomodoroDuration(duration);
+    }, [duration]);
 
     // Timer modunu değiştiren fonksiyon
     const changeMode = useCallback((newMode) => {
@@ -53,7 +94,7 @@ function Timer({
         let newDuration;
         switch (newMode) {
             case 'pomodoro':
-                newDuration = duration;
+                newDuration = pomodoroDuration;
                 break;
             case 'shortBreak':
                 newDuration = SHORT_BREAK_DURATION;
@@ -62,7 +103,7 @@ function Timer({
                 newDuration = LONG_BREAK_DURATION;
                 break;
             default:
-                newDuration = duration;
+                newDuration = pomodoroDuration;
         }
         setTimeLeft(newDuration * 60);
         if (workerRef.current && workerReady) {
@@ -76,7 +117,7 @@ function Timer({
         }
         setHasStarted(false);
         if (onModeChange) onModeChange();
-    }, [duration, workerReady, onModeChange, isAuthenticated, onAnonymousModeChange]);
+    }, [pomodoroDuration, workerReady, onModeChange, isAuthenticated, onAnonymousModeChange]);
 
     // Mod butonuna tıklama fonksiyonu
     const handleModeButtonClick = (newMode) => {
@@ -116,6 +157,13 @@ function Timer({
                 setIsCompleting(true);
                 playSound('complete');
 
+                // Gerçek çalışma süresini hesapla
+                let actualMinutes = null;
+                if (startTime && mode === 'pomodoro') {
+                    actualMinutes = Math.round((Date.now() - startTime) / (1000 * 60));
+                    setActualWorkDuration(actualMinutes);
+                }
+
                 if (mode === 'pomodoro') {
                     showVisualNotification('Pomodoro tamamlandı! Kısa mola zamanı.', 'success', 5000);
                     showBrowserNotification('Pomodoro Tamamlandı', 'Kısa mola zamanı!');
@@ -138,7 +186,7 @@ function Timer({
                     }
                 }
 
-                onComplete();
+                onComplete(actualMinutes);
                 setTimeout(() => {
                     setIsCompleting(false);
                 }, 1000);
@@ -147,7 +195,7 @@ function Timer({
             default:
                 console.log('Bilinmeyen mesaj tipi:', type);
         }
-    }, [onComplete, playSound, showVisualNotification, showBrowserNotification, mode, changeMode, isAuthenticated, onAnonymousModeChange]);
+    }, [onComplete, playSound, showVisualNotification, showBrowserNotification, mode, changeMode, isAuthenticated, onAnonymousModeChange, startTime]);
 
     // Worker'ı oluştur
     useEffect(() => {
@@ -173,7 +221,7 @@ function Timer({
     // Zamanlayıcı sıfırlandığında veya süre değiştiğinde
     useEffect(() => {
         if (workerRef.current && workerReady) {
-            const newDuration = mode === 'pomodoro' ? duration :
+            const newDuration = mode === 'pomodoro' ? pomodoroDuration :
                 mode === 'shortBreak' ? SHORT_BREAK_DURATION :
                     LONG_BREAK_DURATION;
 
@@ -184,13 +232,15 @@ function Timer({
             setTimeLeft(newDuration * 60); // Süreyi güncelle
             setHasStarted(false);  // Sıfırlama yapıldığında başlama durumunu sıfırla
             setIsCompleting(false); // Tamamlanma durumunu da sıfırla
+            setStartTime(null); // Start time'ı sıfırla
+            setActualWorkDuration(0); // Gerçek çalışma süresini sıfırla
         }
-    }, [resetFlag, duration, mode]); // Now depends on mode as well
+    }, [resetFlag, pomodoroDuration, mode]); // Now depends on mode as well
 
     // Süre değiştiğinde timer'ı güncelle
     useEffect(() => {
         if (workerRef.current && workerReady) {
-            const newDuration = mode === 'pomodoro' ? duration :
+            const newDuration = mode === 'pomodoro' ? pomodoroDuration :
                 mode === 'shortBreak' ? SHORT_BREAK_DURATION :
                     LONG_BREAK_DURATION;
 
@@ -200,7 +250,7 @@ function Timer({
             });
             setTimeLeft(newDuration * 60);
         }
-    }, [duration, workerReady, mode]);
+    }, [pomodoroDuration, workerReady, mode]);
 
     // İsActive değişimlerini yönet
     useEffect(() => {
@@ -214,6 +264,10 @@ function Timer({
             if (!hasStarted) {
                 playSound('start');
                 setHasStarted(true);
+                // Pomodoro modunda start time'ı kaydet
+                if (mode === 'pomodoro') {
+                    setStartTime(Date.now());
+                }
             }
 
             workerRef.current.postMessage({
@@ -233,10 +287,12 @@ function Timer({
     // Görsel formatı oluştur
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
-    const totalSeconds = mode === 'pomodoro' ? duration * 60 :
+    const totalSeconds = mode === 'pomodoro' ? pomodoroDuration * 60 :
         mode === 'shortBreak' ? SHORT_BREAK_DURATION * 60 :
             LONG_BREAK_DURATION * 60;
     const progress = ((totalSeconds - timeLeft) / totalSeconds) * 100;
+
+
 
     return (
         <div className="timer">
@@ -260,6 +316,8 @@ function Timer({
                     Uzun Mola
                 </button>
             </div>
+
+
             <div className="timer-container">
                 <div
                     className="timer-circle"
@@ -269,6 +327,67 @@ function Timer({
                     {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                 </div>
             </div>
+
+            {/* Minimal Pomodoro Duration Selector - Sadece pomodoro modu için göster */}
+            {mode === 'pomodoro' && (
+                <div className="duration-selector-compact">
+                    <div className="duration-quick-buttons">
+                        {[15, 25, 45, 60].map((minutes) => (
+                            <button
+                                key={minutes}
+                                className={`duration-quick-btn ${pomodoroDuration === minutes ? 'active' : ''}`}
+                                onClick={() => {
+                                    setPomodoroDuration(minutes);
+                                    setCustomDuration(false);
+                                    if (onDurationChange) {
+                                        onDurationChange(minutes);
+                                    }
+                                }}
+                                title={`${minutes} dakika`}
+                            >
+                                {minutes}dk
+                            </button>
+                        ))}
+                        <button
+                            className={`duration-quick-btn custom ${customDuration ? 'active' : ''}`}
+                            onClick={() => setCustomDuration(!customDuration)}
+                            title="Özel süre"
+                        >
+                            Özel
+                        </button>
+                    </div>
+
+                    {customDuration && (
+                        <div className="custom-duration-compact">
+                            <button
+                                type="button"
+                                className="duration-btn-compact"
+                                onClick={decrementDuration}
+                                disabled={pomodoroDuration <= 1}
+                            >
+                                -
+                            </button>
+                            <input
+                                type="number"
+                                value={pomodoroDuration}
+                                onChange={handleCustomDurationChange}
+                                min="1"
+                                max="120"
+                                className="duration-input-compact"
+                            />
+                            <span className="duration-unit-compact">dk</span>
+                            <button
+                                type="button"
+                                className="duration-btn-compact"
+                                onClick={incrementDuration}
+                                disabled={pomodoroDuration >= 120}
+                            >
+                                +
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
             <ConfirmModal
                 isOpen={showConfirmModal}
                 title="Mod Değiştirilsin mi?"

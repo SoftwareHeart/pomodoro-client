@@ -136,7 +136,9 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
             const totalMinutesSpent = list
                 .filter(x => x.isCompleted)
                 .reduce((sum, x) => sum + (x.duration || 0), 0);
-            const hasAnyActive = list.some(x => !x.isCompleted);
+            const hasAnyCompleted = list.some(x => x.isCompleted);
+            const allCompleted = list.every(x => x.isCompleted);
+
             aggregated.push({
                 // temsilci kayıt
                 id: latest.id,
@@ -144,11 +146,12 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                 duration: latest.duration,
                 startTime: latest.startTime,
                 endTime: latest.endTime,
-                isCompleted: !hasAnyActive && list.length > 0, // tümü tamamlandıysa true
+                isCompleted: allCompleted, // tüm alt görevler tamamlandıysa true
                 // özet alanlar
                 _latest: latest,
                 _items: list,
-                totalMinutesSpent
+                totalMinutesSpent,
+                hasAnyCompleted // en az bir tamamlanmışsa true
             });
         });
 
@@ -380,7 +383,7 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                                                     Detaylar
                                                 </button>
                                                 {typeof task.totalMinutesSpent === 'number' && (
-                                                    <span className="task-spent-chip" title="Bu görev adında tamamlanan tüm oturumların toplamı">
+                                                    <span className="task-spent-chip" title="Bu görev adında tamamlanan tüm pomodoro seanslarının toplam süresi">
                                                         {task.totalMinutesSpent} dk
                                                     </span>
                                                 )}
@@ -399,14 +402,14 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                                                     )}
                                                     {typeof task.totalMinutesSpent === 'number' && (
                                                         <div className="detail-row">
-                                                            <span className="detail-label">Toplam Çalışma</span>
+                                                            <span className="detail-label">Toplam Pomodoro Süresi</span>
                                                             <span className="detail-value">{task.totalMinutesSpent} dk</span>
                                                         </div>
                                                     )}
                                                     {Array.isArray(task._items) && (
                                                         <div className="detail-row">
-                                                            <span className="detail-label">Oturumlar</span>
-                                                            <span className="detail-value">{task._items.length} kayıt</span>
+                                                            <span className="detail-label">Pomodoro Seansları</span>
+                                                            <span className="detail-value">{task._items.length} seans</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -419,7 +422,7 @@ function TaskList({ tasks, onSelectTask, onDeleteTask, onCompleteTask, onAddTask
                                                     className="complete-btn"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        onCompleteTask && onCompleteTask(task.id);
+                                                        onCompleteTask && onCompleteTask(task.taskName);
                                                     }}
                                                     aria-label="Görevi Tamamla"
                                                 >
