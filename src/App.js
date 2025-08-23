@@ -20,10 +20,13 @@ import { NotificationProvider, useNotification } from './contexts/NotificationCo
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { TasksProvider, useTasks } from './contexts/TasksContext';
 import Header from './components/Header';
+import CalendarPage from './pages/CalendarPage';
 
 // Import the CSS files
 import './styles/components/login-prompt.css';
 import './styles/components/statistics-redesigned.css';
+import './styles/components/calendar.css';
+import './styles/pages/calendar-page.css';
 
 // Ana uygulama bileşeni - Provider'ları burada oluşturuyoruz
 function App() {
@@ -41,6 +44,7 @@ function App() {
                     <Profile />
                   </ProtectedRoute>
                 } />
+                <Route path="/calendar" element={<CalendarPage />} />
                 {/* The main route does not require auth anymore */}
                 <Route path="/" element={<AppContent />} />
                 <Route path="*" element={<Navigate to="/" />} />
@@ -210,7 +214,11 @@ function AppContent() {
           // Aktif görev yoksa genel pomodoro seansı kaydet
           await recordPomodoroForTask('Pomodoro Seansı', actualWorkMinutes);
         }
+        // Görev listesini yenile - bu sayede bugünkü çalışma süreleri güncellenecek
+        // Yeni oluşturulan pomodoro seansları görev listesinde görünmeyecek çünkü
+        // recordPomodoroForTask sadece istatistik için session oluşturuyor
         await fetchTasks();
+
         // İstatistikleri otomatik yenile
         setStatsRefreshKey(prev => prev + 1);
       } catch (error) {

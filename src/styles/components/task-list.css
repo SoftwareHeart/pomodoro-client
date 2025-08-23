@@ -497,6 +497,46 @@
     padding: var(--spacing-sm) var(--spacing-sm);
 }
 
+/* Enhanced task details */
+.task-details.enhanced {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-xl);
+    background: linear-gradient(135deg,
+            rgba(var(--color-panel-rgb), 0.95),
+            rgba(var(--color-panel-rgb), 0.85));
+    border: 1px solid rgba(var(--color-border-rgb), 0.3);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        var(--shadow-lg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.detail-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.detail-section:last-child {
+    margin-bottom: 0;
+}
+
+.detail-section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-foreground);
+    opacity: 0.9;
+}
+
+.detail-section-title svg {
+    opacity: 0.7;
+    color: var(--color-primary);
+}
+
 .detail-chips {
     display: flex;
     flex-wrap: wrap;
@@ -507,12 +547,69 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 10px;
-    border-radius: var(--border-radius-md);
+    padding: 8px 12px;
+    border-radius: var(--border-radius-lg);
     background: rgba(var(--color-foreground-rgb), 0.04);
     border: 1px solid var(--color-border);
     font-size: var(--font-size-xs);
     color: var(--color-foreground);
+    transition: all var(--transition-fast);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.chip:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Chip variants */
+.chip.primary {
+    background: linear-gradient(135deg,
+            rgba(var(--color-primary-rgb), 0.15),
+            rgba(var(--color-primary-rgb), 0.1));
+    border-color: rgba(var(--color-primary-rgb), 0.3);
+    color: var(--color-primary);
+}
+
+.chip.secondary {
+    background: linear-gradient(135deg,
+            rgba(var(--color-secondary-rgb), 0.15),
+            rgba(var(--color-secondary-rgb), 0.1));
+    border-color: rgba(var(--color-secondary-rgb), 0.3);
+    color: var(--color-secondary);
+}
+
+.chip.success {
+    background: linear-gradient(135deg,
+            rgba(34, 197, 94, 0.15),
+            rgba(34, 197, 94, 0.1));
+    border-color: rgba(34, 197, 94, 0.3);
+    color: rgb(34, 197, 94);
+}
+
+.chip.warning {
+    background: linear-gradient(135deg,
+            rgba(234, 179, 8, 0.15),
+            rgba(234, 179, 8, 0.1));
+    border-color: rgba(234, 179, 8, 0.3);
+    color: rgb(234, 179, 8);
+}
+
+.chip.info {
+    background: linear-gradient(135deg,
+            rgba(59, 130, 246, 0.15),
+            rgba(59, 130, 246, 0.1));
+    border-color: rgba(59, 130, 246, 0.3);
+    color: rgb(59, 130, 246);
+}
+
+.chip.accent {
+    background: linear-gradient(135deg,
+            rgba(var(--color-accent-rgb), 0.15),
+            rgba(var(--color-accent-rgb), 0.1));
+    border-color: rgba(var(--color-accent-rgb), 0.3);
+    color: var(--color-accent);
 }
 
 .detail-row {

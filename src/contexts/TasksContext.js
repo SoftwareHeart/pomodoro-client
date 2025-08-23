@@ -128,15 +128,20 @@ export function TasksProvider({ children }) {
         }
     }, [authApiService, tasks]);
 
-    // Timer tamamlandığında istatistiklere işlenecek arka plan oturumu oluştur
-    // Not: tasks state'ini kirletmemek için yeni oluşturulan ve tamamlanan oturumu listeye eklemiyoruz
+    // Timer tamamlandığında sadece çalışma süresini kaydet, görevi tamamlama
+    // Pomodoro tamamlandığında görev otomatik tamamlanmayacak, sadece çalışma süresi istatistiklere eklenecek
     const recordPomodoroForTask = useCallback(async (taskName, duration) => {
         try {
+            // Sadece istatistik kaydı için geçici bir session oluştur ve tamamla
+            // Bu görev listesinde görünmez, sadece istatistiklere yansır
             const newSession = await authApiService.createSession({ taskName, duration });
             await authApiService.completeSession(newSession.id);
+
+            // Görev listesini yenileme - bu satırı kaldırıyoruz çünkü App.js'de zaten çağrılıyor
+            // ve gereksiz yere görev listesinin yenilenmesine neden oluyor
             return true;
         } catch (error) {
-            console.error("Arka plan pomodoro kaydı oluşturulurken hata oluştu:", error);
+            console.error("Pomodoro kaydı oluşturulurken hata oluştu:", error);
             throw error;
         }
     }, [authApiService]);
