@@ -4,17 +4,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-ro
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import Timer from './components/Timer';
 import PomodoroControls from './components/PomodoroControls';
-import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
 import StatisticsPanel from './components/StatisticsPanel';
-import ThemeSelector from './components/ThemeSelector';
-import NotificationSettings from './components/NotificationSettings';
 import NotificationsContainer from './components/NotificationsContainer';
 import Login from './components/Login';
 import Register from './components/Register';
-import Profile from './components/Profile';
-import ProtectedRoute from './components/ProtectedRoute';
-import LoginPrompt from './components/LoginPrompt';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -39,11 +33,7 @@ function App() {
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/profile" element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } />
+
                 <Route path="/calendar" element={<CalendarPage />} />
                 {/* The main route does not require auth anymore */}
                 <Route path="/" element={<AppContent />} />
@@ -66,7 +56,7 @@ function AppContent() {
   const [resetFlag, setResetFlag] = useState(0);
   const { showVisualNotification } = useNotification();
   const { currentUser, isAuthenticated } = useAuth();
-  const { tasks, loading, error: tasksError, fetchTasks, addTask, deleteTask, completeTask, recordPomodoroForTask } = useTasks();
+  const { tasks, loading, error: tasksError, fetchTasks, addTask, deleteTask, completeTask, recordPomodoroForTask, autoSessionIds } = useTasks();
 
   // Anonymous timer state - for users who aren't logged in
   const [anonymousTimerDuration, setAnonymousTimerDuration] = useState(25);
@@ -115,8 +105,6 @@ function AppContent() {
     if (!isAuthenticated()) {
       return;
     }
-
-    const selectedTask = tasks.find(task => task.id === taskId);
 
     // Eğer zamanlayıcı çalışıyorsa ve farklı bir görev seçilmeye çalışılıyorsa
     if (isActive && activeTaskId !== taskId) {
@@ -319,6 +307,7 @@ function AppContent() {
               <div className="tasks-list-wrapper">
                 <TaskList
                   tasks={tasks}
+                  autoSessionIds={autoSessionIds}
                   activeTaskId={activeTaskId}
                   isTimerActive={isActive}
                   activeStartAt={activeStartAt}

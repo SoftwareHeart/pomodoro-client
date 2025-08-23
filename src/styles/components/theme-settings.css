@@ -25,11 +25,11 @@
 
 .theme-dropdown {
     position: absolute;
-    top: 50px;
+    top: calc(100% + var(--spacing-xs));
     right: 0;
     background-color: var(--color-panel);
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
     padding: var(--spacing-md);
     width: 200px;
     z-index: var(--z-index-dropdown);
@@ -130,11 +130,11 @@
 
 .settings-panel {
     position: absolute;
-    top: 50px;
+    top: calc(100% + var(--spacing-xs));
     right: 0;
     background-color: var(--color-panel);
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
     padding: var(--spacing-md);
     width: 250px;
     z-index: var(--z-index-dropdown);

@@ -251,15 +251,15 @@
 
 .settings-panel {
     position: absolute;
-    top: 100%;
+    top: calc(100% + var(--spacing-xs));
     right: 0;
     background: var(--color-panel);
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
     padding: var(--spacing-lg);
     min-width: 280px;
-    z-index: var(--z-index-modal);
+    z-index: var(--z-index-dropdown);
     animation: slideDown 0.3s ease;
 }
 
